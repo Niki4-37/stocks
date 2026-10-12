@@ -1,0 +1,11 @@
+server:
+  port: 8085
+
+spring:
+  application:
+    name: stocks
+
+moex:
+  url: https://iss.moex.com/iss
+  connection-duration-sec: 10
+  read-duration-sec: 10
