@@ -4,6 +4,37 @@ server:
 spring:
   application:
     name: stocks
+  datasource:
+    url: jdbc:postgresql://${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}?currentSchema=${SCHEMA_NAME:stocks}
+    username: ${POSTGRES_USER}
+    password: ${POSTGRES_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      connection-timeout: 3000
+      max-pool-size: 10
+      idle-timeout: 600000
+      validation-timeout: 5000
+      leak-detection-treshold: 60000
+      connettion-test-query: SELECT 1
+      initialization-fail-timeout: 30000
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        format-sql: true
+  jackson:
+    property-naming-strategy: SNAKE_CASE
+  flyway:
+    enabled: true
+    location: classpath:db/migration
+    baseline-on-migrate: true
+    baseline-version: 0
+    validate-on-migrate: true
+    schemas: stocks
+    default-schema: stocks
+    table: flyway_schema_history
 
 moex:
   url: https://iss.moex.com/iss
