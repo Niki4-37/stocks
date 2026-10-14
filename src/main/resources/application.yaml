@@ -23,6 +23,7 @@ spring:
       ddl-auto: validate
     properties:
       hibernate:
+        default_schema: ${SCHEMA_NAME:stocks}
         format-sql: true
   jackson:
     property-naming-strategy: SNAKE_CASE
@@ -32,8 +33,8 @@ spring:
     baseline-on-migrate: true
     baseline-version: 0
     validate-on-migrate: true
-    schemas: stocks
-    default-schema: stocks
+    schemas: {SCHEMA_NAME:stocks}
+    default-schema: {SCHEMA_NAME:stocks}
     table: flyway_schema_history
 
 moex:

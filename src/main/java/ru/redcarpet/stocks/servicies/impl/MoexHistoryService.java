@@ -1,4 +1,4 @@
-package ru.redcarpet.stocks.servicies;
+package ru.redcarpet.stocks.servicies.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
