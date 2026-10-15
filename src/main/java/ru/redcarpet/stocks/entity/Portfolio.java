@@ -35,7 +35,7 @@ public class Portfolio {
     private String name;
 
     @Column(name = "base_currency", nullable = false, length = 3)
-    private Currency banseCurrency;
+    private Currency baseCurrency;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;

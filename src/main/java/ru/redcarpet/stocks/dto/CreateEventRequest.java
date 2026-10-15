@@ -1,12 +1,11 @@
 package ru.redcarpet.stocks.dto;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.Getter;
 import ru.redcarpet.stocks.enums.OperationType;
-import ru.redcarpet.stocks.enums.SecurityType;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -15,10 +14,11 @@ import java.util.Currency;
 @Getter
 public class CreateEventRequest {
 
-    private SecurityType securityType;
+    @NotNull
+    private Long portfolioId;
 
     @NotNull
-    private String secId;
+    private String ticker;
 
     private OperationType operationType;
 
@@ -27,8 +27,10 @@ public class CreateEventRequest {
 
     /** Цена за одну бумагу (или сумма для DIVIDEND/COUPON/FEE) */
     @NotNull
+    @PositiveOrZero
     private BigDecimal price;
 
+    @NotNull
     private Currency currency;
 
     /**
@@ -43,8 +45,8 @@ public class CreateEventRequest {
     public CreateEventRequest() {}
 
     @JsonCreator
-    public CreateEventRequest( @JsonProperty("securityType") SecurityType securityType,
-                               @JsonProperty("secId") String secId,
+    public CreateEventRequest( @JsonProperty("portfolioId") Long portfolioId,
+                               @JsonProperty("ticker") String ticker,
                                @JsonProperty("operationType") OperationType operationType,
                                @JsonProperty("eventDate") LocalDate eventDate,
                                @JsonProperty("price") BigDecimal price,
@@ -52,8 +54,8 @@ public class CreateEventRequest {
                                @JsonProperty("exchangeRate") BigDecimal exchangeRate,
                                @JsonProperty("quantity") BigDecimal quantity
     ) {
-        this.securityType = securityType;
-        this.secId = secId;
+        this.portfolioId = portfolioId;
+        this.ticker = ticker;
         this.operationType = operationType;
         this.eventDate = eventDate;
         this.price = price;
