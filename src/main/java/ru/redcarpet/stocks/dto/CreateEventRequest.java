@@ -17,9 +17,9 @@ public class CreateEventRequest {
     @NotNull
     private Long portfolioId;
 
-    @NotNull
     private String ticker;
 
+    @NotNull
     private OperationType operationType;
 
     @NotNull

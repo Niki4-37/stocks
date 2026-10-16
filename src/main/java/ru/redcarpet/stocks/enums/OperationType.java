@@ -1,32 +1,48 @@
 package ru.redcarpet.stocks.enums;
 
+import lombok.Getter;
+
+@Getter
 public enum OperationType {
-    BUY("Покупка"),
-    SELL("Продажа"),
-    DIVIDEND("Дивиденды"),
-    COUPON("Купон"),
-    FEE("Комиссия"),
-    DEPOSIT("Пополнение"),
-    WITHDRAWAL("Вывод средств"),
-    TRANSFER_IN("Зачисление ЦБ"),
-    TRANSFER_OUT("Списание ЦБ");
+    BUY("Покупка", Direction.OUT, Direction.IN),
+    SELL("Продажа", Direction.IN, Direction.OUT),
+    DIVIDEND("Дивиденды", Direction.IN, Direction.NONE),
+    COUPON("Купон", Direction.IN, Direction.NONE),
+    FEE("Комиссия", Direction.OUT, Direction.NONE),
+    DEPOSIT("Пополнение", Direction.IN, Direction.NONE),
+    WITHDRAWAL("Вывод средств", Direction.OUT, Direction.NONE),
+    TRANSFER_IN("Зачисление ЦБ", Direction.NONE, Direction.IN),
+    TRANSFER_OUT("Списание ЦБ", Direction.NONE, Direction.OUT);
 
     private final String displayName;
+    private final Direction cashDir;
+    private final Direction securitiesDir;
 
-    OperationType(String displayName) {
+    OperationType(String displayName, Direction cashDir, Direction securitiesDir) {
         this.displayName = displayName;
+        this.cashDir = cashDir;
+        this.securitiesDir = securitiesDir;
     }
-
-    public String getDisplayName() { return displayName; }
 
     /** Влияет ли операция на количество бумаг в портфеле */
     public boolean affectsQuantity() {
-        return this == BUY || this == SELL
-                || this == TRANSFER_IN || this == TRANSFER_OUT;
+        return securitiesDir != Direction.NONE;
     }
 
     /** Влияет ли на денежный баланс */
     public boolean affectsCash() {
-        return this != TRANSFER_IN && this != TRANSFER_OUT;
+        return cashDir != Direction.NONE;
+    }
+
+    public enum Direction {
+        IN, OUT, NONE;
+
+        public int sign() {
+            return switch(this) {
+                case IN -> 1;
+                case OUT -> -1;
+                case NONE -> 0;
+            };
+        }
     }
 }

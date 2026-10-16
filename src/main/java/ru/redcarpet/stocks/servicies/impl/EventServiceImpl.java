@@ -7,14 +7,15 @@ import ru.redcarpet.stocks.dto.CreateEventRequest;
 import ru.redcarpet.stocks.entity.Event;
 import ru.redcarpet.stocks.entity.Portfolio;
 import ru.redcarpet.stocks.entity.Security;
+import ru.redcarpet.stocks.enums.OperationType;
 import ru.redcarpet.stocks.exception.NotFoundException;
 import ru.redcarpet.stocks.exception.ValidationException;
 import ru.redcarpet.stocks.repositories.EventRepository;
 import ru.redcarpet.stocks.repositories.PortfolioRepository;
 import ru.redcarpet.stocks.repositories.SecurityRepository;
+import ru.redcarpet.stocks.servicies.BalanceService;
 import ru.redcarpet.stocks.servicies.EventService;
 import ru.redcarpet.stocks.servicies.HoldingService;
-import ru.redcarpet.stocks.servicies.PortfolioService;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -28,7 +29,7 @@ public class EventServiceImpl implements EventService {
     private final EventRepository eventRepository;
     private final PortfolioRepository portfolioRepository;
     private final SecurityRepository securityRepository;
-    private final PortfolioService portfolioService;
+    private final BalanceService balanceService;
     private final HoldingService holdingService;
 
     @Override
@@ -38,39 +39,41 @@ public class EventServiceImpl implements EventService {
                 .orElseThrow(() -> new NotFoundException(
                         "Portfolio not found: " + request.getPortfolioId()));
 
-        Security security = securityRepository.findByTicker(request.getTicker())
-                .orElseThrow(() -> new NotFoundException(
-                        "Security not found: " + request.getTicker()));
+        Security security = resolveSecurity(request);
 
-        validateByOperationType(request);
+        validate(request);
 
         Currency baseCurrency = portfolio.getBaseCurrency();
         BigDecimal exchangeRate = resolveExchangeRate(request, baseCurrency);
 
         BigDecimal amount = computeAmount(request);
-        BigDecimal amountInBase = computeAmountInBase(amount, exchangeRate);
 
-        Event event = new Event();
-        event.setPortfolio(portfolio);
-        event.setSecurity(security);
-        event.setOperationType(request.getOperationType());
-        event.setEventDate(request.getEventDate());
-        event.setPrice(request.getPrice());
-        event.setCurrency(request.getCurrency());
-        event.setExchangeRate(exchangeRate);
-        event.setQuantity(request.getQuantity());
-        event.setAmount(amount);
-        event.setAmountInBaseCurrency(amountInBase);
+        applyCashMovement(portfolio, request, amount);
 
+        Event event = buildEvent(portfolio, security, request, exchangeRate, amount);
         Event saved = eventRepository.save(event);
 
-        // обновляем позицию в той же транзакции
         if (saved.getOperationType().affectsQuantity()) {
             holdingService.applyEvent(saved);
         }
     }
 
-    private void validateByOperationType(CreateEventRequest request) {
+    private Security resolveSecurity(CreateEventRequest request) {
+        if (Objects.isNull(request.getTicker())) {
+            if (request.getOperationType().affectsQuantity()) {
+                throw new ValidationException(
+                        "ticker is required for " + request.getOperationType()
+                );
+            }
+            return null;
+        }
+        return securityRepository.findByTicker(request.getTicker())
+                .orElseThrow(() -> new NotFoundException(
+                        "Security not found: " + request.getTicker()
+                ));
+    }
+
+    private void validate(CreateEventRequest request) {
         boolean needsQty = request.getOperationType().affectsQuantity();
 
         if (needsQty) {
@@ -116,10 +119,43 @@ public class EventServiceImpl implements EventService {
         return price.multiply(req.getQuantity()).setScale(2, RoundingMode.HALF_UP);
     }
 
-    private BigDecimal computeAmountInBase(BigDecimal amount, BigDecimal exchangeRate) {
-        if (exchangeRate == null) {
-            return amount;
+    private void applyCashMovement(Portfolio portfolio,
+                                   CreateEventRequest req,
+                                   BigDecimal amount
+    ) {
+        OperationType type = req.getOperationType();
+        if (!type.affectsCash()) return;
+
+        Currency currency = req.getCurrency();
+
+        switch (type.getCashDir()) {
+            case IN -> balanceService.credit(portfolio, currency, amount);
+            case OUT -> balanceService.debit(portfolio, currency, amount);
+            case NONE -> { }
         }
-        return amount.multiply(exchangeRate).setScale(2, RoundingMode.HALF_UP);
+    }
+
+    private Event buildEvent(
+            Portfolio portfolio,
+            Security security,
+            CreateEventRequest request,
+            BigDecimal exchangeRate,
+            BigDecimal amount
+    ) {
+        BigDecimal amountInBase = Objects.isNull(exchangeRate) ? BigDecimal.ZERO : amount.multiply(exchangeRate);
+
+        Event event = new Event();
+        event.setPortfolio(portfolio);
+        event.setSecurity(security);
+        event.setOperationType(request.getOperationType());
+        event.setEventDate(request.getEventDate());
+        event.setPrice(request.getPrice());
+        event.setCurrency(request.getCurrency());
+        event.setExchangeRate(exchangeRate);
+        event.setQuantity(request.getQuantity());
+        event.setAmount(amount);
+        event.setAmountInBaseCurrency(amountInBase);
+
+        return event;
     }
 }

@@ -14,6 +14,21 @@ CREATE TABLE IF NOT EXISTS stocks.portfolios (
         CHECK (char_length(base_currency) = 3)
 );
 
+CREATE TABLE IF NOT EXISTS stocks.portfolio_balances (
+    id              BIGINT          GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    portfolio_id    BIGINT          NOT NULL,
+    currency        VARCHAR(3)      NOT NULL,
+    amount          NUMERIC(19,2)   NOT NULL DEFAULT 0,
+
+    created_at      TIMESTAMPTZ     NOT NULL DEFAULT now(),
+    updated_at      TIMESTAMPTZ     NOT NULL,
+
+    CONSTRAINT fk_balances_portfolio
+        FOREIGN KEY (portfolio_id)
+        REFERENCES stocks.portfolios (id)
+        ON DELETE CASCADE
+);
+
 CREATE TABLE IF NOT EXISTS stocks.securities (
     id              BIGINT          GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     ticker          VARCHAR(20),
@@ -30,7 +45,7 @@ CREATE TABLE IF NOT EXISTS stocks.securities (
 CREATE TABLE IF NOT EXISTS stocks.events (
     id              BIGINT          GENERATED ALWAYS AS IDENTITY    PRIMARY KEY,
     portfolio_id    BIGINT          NOT NULL,
-    security_id     BIGINT          NOT NULL,
+    security_id     BIGINT,
 
     operation_type  VARCHAR(32)     NOT NULL,
     event_date      DATE            NOT NULL,
