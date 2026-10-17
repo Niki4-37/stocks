@@ -24,8 +24,8 @@ public class PortfolioController {
 
     @PostMapping
     public ResponseEntity<String> create(@RequestBody CreatePortfolioRequest request) {
-
-        return ResponseEntity.status(HttpStatus.CREATED).body("Successfully created!");
+        portfolioService.create(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body("Portfolio successfully created!");
     }
 
     @GetMapping("/{id}/balances")

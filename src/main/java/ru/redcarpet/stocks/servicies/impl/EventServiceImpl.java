@@ -53,9 +53,7 @@ public class EventServiceImpl implements EventService {
         Event event = buildEvent(portfolio, security, request, exchangeRate, amount);
         Event saved = eventRepository.save(event);
 
-        if (saved.getOperationType().affectsQuantity()) {
-            holdingService.applyEvent(saved);
-        }
+        holdingService.applyEvent(saved);
     }
 
     private Security resolveSecurity(CreateEventRequest request) {
@@ -142,8 +140,6 @@ public class EventServiceImpl implements EventService {
             BigDecimal exchangeRate,
             BigDecimal amount
     ) {
-        BigDecimal amountInBase = Objects.isNull(exchangeRate) ? BigDecimal.ZERO : amount.multiply(exchangeRate);
-
         Event event = new Event();
         event.setPortfolio(portfolio);
         event.setSecurity(security);
@@ -154,7 +150,6 @@ public class EventServiceImpl implements EventService {
         event.setExchangeRate(exchangeRate);
         event.setQuantity(request.getQuantity());
         event.setAmount(amount);
-        event.setAmountInBaseCurrency(amountInBase);
 
         return event;
     }

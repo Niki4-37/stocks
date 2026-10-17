@@ -33,4 +33,10 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, String>> onNotFound(NotFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", ex.getMessage()));
     }
+
+    @ExceptionHandler(ConflictException.class)
+    public ResponseEntity<Map<String, String>> onConflict(ConflictException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(Map.of("error", ex.getMessage()));
+    }
 }

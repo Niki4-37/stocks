@@ -13,12 +13,10 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import ru.redcarpet.stocks.enums.OperationType;
-import ru.redcarpet.stocks.enums.SecurityType;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -65,9 +63,6 @@ public class Event {
 
     @Column(nullable = false, precision = 19, scale = 2)
     private BigDecimal amount;
-
-    @Column(name = "amount_in_base", nullable = false, precision = 19, scale = 2)
-    private BigDecimal amountInBaseCurrency;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;

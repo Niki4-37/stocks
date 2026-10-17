@@ -4,15 +4,12 @@ import lombok.Getter;
 
 @Getter
 public enum OperationType {
-    BUY("Покупка", Direction.OUT, Direction.IN),
-    SELL("Продажа", Direction.IN, Direction.OUT),
-    DIVIDEND("Дивиденды", Direction.IN, Direction.NONE),
-    COUPON("Купон", Direction.IN, Direction.NONE),
-    FEE("Комиссия", Direction.OUT, Direction.NONE),
-    DEPOSIT("Пополнение", Direction.IN, Direction.NONE),
-    WITHDRAWAL("Вывод средств", Direction.OUT, Direction.NONE),
-    TRANSFER_IN("Зачисление ЦБ", Direction.NONE, Direction.IN),
-    TRANSFER_OUT("Списание ЦБ", Direction.NONE, Direction.OUT);
+    BUY("Покупка",                  Direction.OUT, Direction.IN),
+    SELL("Продажа",                 Direction.IN, Direction.OUT),
+    DIVIDEND("Дивиденды",           Direction.IN, Direction.NONE),
+    COUPON("Купон",                 Direction.IN, Direction.NONE),
+    TRANSFER_IN("Зачисление ЦБ",    Direction.NONE, Direction.IN),
+    TRANSFER_OUT("Списание ЦБ",     Direction.NONE, Direction.OUT);
 
     private final String displayName;
     private final Direction cashDir;

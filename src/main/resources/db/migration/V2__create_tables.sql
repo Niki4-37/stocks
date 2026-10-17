@@ -56,7 +56,6 @@ CREATE TABLE IF NOT EXISTS stocks.events (
     quantity        NUMERIC(19,6),
 
     amount          NUMERIC(19,2)   NOT NULL,
-    amount_in_base  NUMERIC(19,2)   NOT NULL,
 
     created_at      TIMESTAMPTZ     NOT NULL DEFAULT now(),
     updated_at      TIMESTAMPTZ     NOT NULL,
@@ -92,6 +91,10 @@ CREATE TABLE IF NOT EXISTS stocks.holdings (
     avg_price       NUMERIC(19,6)   NOT NULL,
     currency        VARCHAR(3)      NOT NULL,
 
+    total_dividends NUMERIC(19,2)   NOT NULL DEFAULT 0,
+    total_coupons   NUMERIC(19,2)   NOT NULL DEFAULT 0,
+    realized_pnl    NUMERIC(19,2)   NOT NULL DEFAULT 0,
+
     first_buy_date  DATE,
     last_event_date DATE,
 
@@ -107,10 +110,57 @@ CREATE TABLE IF NOT EXISTS stocks.holdings (
         FOREIGN KEY (security_id)
         REFERENCES stocks.securities (id),
 
-    CONSTRAINT chk_holdings_quantity_positive
-        CHECK (quantity > 0),
-    CONSTRAINT chk_holdings_avg_price_non_negative
-        CHECK (avg_price >= 0),
     CONSTRAINT chk_holdings_currency_len
         CHECK (char_length(currency) = 3)
+);
+
+CREATE TABLE IF NOT EXISTS stocks.cash_operations (
+    id              BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    portfolio_id    BIGINT          NOT NULL,
+
+    operation_type  VARCHAR(32)     NOT NULL,
+    operation_date  DATE            NOT NULL,
+
+    currency        VARCHAR(3)      NOT NULL,
+    amount          NUMERIC(19,2)   NOT NULL,
+
+    target_currency VARCHAR(3),       -- только CURRENCY_EXCHANGE
+    target_amount   NUMERIC(19,2),    -- только CURRENCY_EXCHANGE
+    exchange_rate   NUMERIC(19,8),    -- только CURRENCY_EXCHANGE
+
+    comment         VARCHAR(500),
+
+    created_at      TIMESTAMPTZ     NOT NULL DEFAULT now(),
+    updated_at      TIMESTAMPTZ     NOT NULL DEFAULT now(),
+
+    CONSTRAINT fk_cash_ops_portfolio
+        FOREIGN KEY (portfolio_id)
+        REFERENCES stocks.portfolios (id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT chk_cash_ops_currency_len
+        CHECK (char_length(currency) = 3),
+    CONSTRAINT chk_cash_ops_target_currency_len
+        CHECK (target_currency IS NULL OR char_length(target_currency) = 3),
+
+    CONSTRAINT chk_cash_ops_amount_positive
+        CHECK (amount > 0),
+    CONSTRAINT chk_cash_ops_target_amount_positive
+        CHECK (target_amount IS NULL OR target_amount > 0),
+
+    CONSTRAINT chk_cash_ops_exchange_fields
+        CHECK (
+            (operation_type = 'CURRENCY_EXCHANGE'
+                AND target_currency IS NOT NULL
+                AND target_amount IS NOT NULL
+                AND currency <> target_currency)
+            OR
+            (operation_type <> 'CURRENCY_EXCHANGE'
+                AND target_currency IS NULL
+                AND target_amount IS NULL
+                AND exchange_rate IS NULL)
+        ),
+
+    CONSTRAINT chk_cash_ops_exchange_rate_positive
+        CHECK (exchange_rate IS NULL OR exchange_rate > 0)
 );
