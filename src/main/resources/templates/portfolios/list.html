@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Портфели</title>
+    <style>
+        body { font-family: sans-serif; margin: 2rem; }
+        table { border-collapse: collapse; width: 100%; max-width: 800px; }
+        th, td { border: 1px solid #ccc; padding: 0.5rem 0.75rem; text-align: left; }
+        th { background: #f4f4f4; }
+        .actions { margin-bottom: 1rem; }
+        .empty { color: #888; font-style: italic; }
+        .error { color: #b00020; margin-bottom: 1rem; }
+    </style>
+</head>
+<body>
+
+<h1>Портфели</h1>
+
+<div class="actions">
+    <a th:href="@{/ui/portfolios/new}">+ Создать портфель</a>
+</div>
+
+<table th:if="${not #lists.isEmpty(portfolios)}">
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>Название</th>
+        <th>Базовая валюта</th>
+        <th>Создан</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="p : ${portfolios}">
+        <td th:text="${p.id}">1</td>
+        <td th:text="${p.name}">Основной</td>
+        <td th:text="${p.baseCurrency}">RUB</td>
+        <td th:text="${p.createdAt}">2026-10-16</td>
+    </tr>
+    </tbody>
+</table>
+
+<p class="empty" th:if="${#lists.isEmpty(portfolios)}">
+    Портфелей пока нет. Создайте первый.
+</p>
+
+</body>
+</html>

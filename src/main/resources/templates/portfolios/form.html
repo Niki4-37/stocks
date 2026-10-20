@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Новый портфель</title>
+    <style>
+        body { font-family: sans-serif; margin: 2rem; max-width: 500px; }
+        label { display: block; margin-top: 1rem; font-weight: 600; }
+        input { width: 100%; padding: 0.4rem; box-sizing: border-box; }
+        .error { color: #b00020; margin: 1rem 0; padding: 0.5rem; background: #fde; }
+        .actions { margin-top: 1.5rem; }
+        button { padding: 0.5rem 1.2rem; }
+    </style>
+</head>
+<body>
+
+<h1>Новый портфель</h1>
+
+<div class="error" th:if="${error}" th:text="${error}"></div>
+
+<form th:action="@{/ui/portfolios}" th:object="${request}" method="post">
+
+    <label for="name">Название</label>
+    <input type="text" id="name" th:field="*{name}" required maxlength="100">
+
+    <label for="baseCurrency">Базовая валюта (ISO)</label>
+    <input type="text" id="baseCurrency" th:field="*{baseCurrency}"
+           placeholder="RUB" maxlength="3" required>
+
+    <label for="initialBalance">Начальный баланс (опционально)</label>
+    <input type="number" id="initialBalance" th:field="*{initialBalance}"
+           step="0.01" min="0" placeholder="0.00">
+
+    <div class="actions">
+        <button type="submit">Создать</button>
+        <a th:href="@{/ui/portfolios}">Отмена</a>
+    </div>
+</form>
+
+</body>
+</html>

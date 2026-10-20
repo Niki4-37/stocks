@@ -13,6 +13,7 @@ import ru.redcarpet.stocks.repositories.PortfolioBalanceRepository;
 import ru.redcarpet.stocks.repositories.PortfolioRepository;
 import ru.redcarpet.stocks.servicies.BalanceService;
 import ru.redcarpet.stocks.servicies.PortfolioService;
+import ru.redcarpet.stocks.ui.dto.PortfolioResponse;
 
 import java.math.BigDecimal;
 import java.util.Currency;
@@ -58,5 +59,10 @@ public class PortfolioServiceImpl implements PortfolioService {
         return balanceRepository.findAllByPortfolioId(id).stream()
                 .map(pb -> new BalanceResponse(pb.getCurrency(), pb.getAmount()))
                 .toList();
+    }
+
+    @Override
+    public List<PortfolioResponse> findAll() {
+        return List.of();
     }
 }

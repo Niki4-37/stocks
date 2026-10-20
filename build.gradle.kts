@@ -28,6 +28,9 @@ dependencies {
     implementation ("org.springframework.boot:spring-boot-starter-flyway")
     implementation ("org.flywaydb:flyway-database-postgresql")
 
+    //ui
+    implementation ("org.springframework.boot:spring-boot-starter-thymeleaf")
+
     compileOnly("org.projectlombok:lombok")
     runtimeOnly("org.postgresql:postgresql")
     annotationProcessor("org.projectlombok:lombok")
