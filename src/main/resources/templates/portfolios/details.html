@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${portfolio.name}">Портфель</title>
+    <style>
+        body { font-family: sans-serif; margin: 2rem; }
+        h1 { margin-bottom: 0.5rem; }
+        .meta { color: #666; margin-bottom: 1.5rem; }
+        table { border-collapse: collapse; width: 100%; max-width: 900px; margin-bottom: 1.5rem; }
+        th, td { border: 1px solid #ccc; padding: 0.5rem 0.75rem; text-align: left; }
+        th { background: #f4f4f4; }
+        td.num { text-align: right; font-variant-numeric: tabular-nums; }
+        .empty { color: #888; font-style: italic; }
+        .section { margin-bottom: 2rem; }
+        .back { margin-bottom: 1rem; display: inline-block; }
+    </style>
+</head>
+<body>
+
+<a class="back" th:href="@{/ui/portfolios}">← К списку портфелей</a>
+
+<h1 th:text="${portfolio.name}">Основной</h1>
+<p class="meta">
+    Базовая валюта: <span th:text="${portfolio.baseCurrency}">RUB</span>
+</p>
+
+<!-- ================= Балансы ================= -->
+<div class="section">
+    <h2>Балансы</h2>
+
+    <table th:if="${not #lists.isEmpty(portfolio.balances)}">
+        <thead>
+        <tr>
+            <th>Валюта</th>
+            <th class="num">Сумма</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="b : ${portfolio.balances}">
+            <td th:text="${b.currency}">RUB</td>
+            <td class="num" th:text="${#numbers.formatDecimal(b.amount, 1, 2)}">1000000.00</td>
+        </tr>
+        </tbody>
+    </table>
+
+    <p class="empty" th:if="${#lists.isEmpty(portfolio.balances)}">
+        Нет средств на счетах.
+    </p>
+</div>
+
+<!-- ================= Позиции ================= -->
+<div class="section">
+    <h2>Позиции</h2>
+
+    <table th:if="${not #lists.isEmpty(portfolio.holdings)}">
+        <thead>
+        <tr>
+            <th>Тикер</th>
+            <th>Название</th>
+            <th class="num">Кол-во</th>
+            <th class="num">Средняя цена</th>
+            <th>Валюта</th>
+            <th class="num">Дивиденды</th>
+            <th class="num">Купоны</th>
+            <th class="num">Реализовано</th>
+            <th class="num">Себестоимость</th>
+            <th class="num">Рыночная стоимость</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="h : ${portfolio.holdings}">
+            <td th:text="${h.ticker}">LKOH</td>
+            <td th:text="${h.name}">Лукойл</td>
+            <td class="num" th:text="${#numbers.formatDecimal(h.quantity, 1, 6)}">10.000000</td>
+            <td class="num" th:text="${#numbers.formatDecimal(h.avgPrice, 1, 2)}">6100.00</td>
+            <td th:text="${h.currency}">RUB</td>
+            <td class="num" th:text="${#numbers.formatDecimal(h.totalDividends, 1, 2)}">250.00</td>
+            <td class="num" th:text="${#numbers.formatDecimal(h.totalCoupons, 1, 2)}">0.00</td>
+            <td class="num" th:text="${#numbers.formatDecimal(h.realizedPnl, 1, 2)}">1000.00</td>
+            <td class="num" th:text="${#numbers.formatDecimal(h.costBasis, 1, 2)}">61000.00</td>
+            <td class="num">
+                <span th:if="${h.marketValue != null}"
+                    th:text="${#numbers.formatDecimal(h.marketValue, 1, 2)}">—</span>
+                <span th:if="${h.marketValue == null}" class="empty">—</span>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+
+    <p class="empty" th:if="${#lists.isEmpty(portfolio.holdings)}">
+        Открытых позиций нет.
+    </p>
+</div>
+
+<div class="section">
+    <h2>Итого по портфелю</h2>
+    <table>
+        <tbody>
+        <tr>
+            <td>Денежные средства (<span th:text="${portfolio.baseCurrency}">RUB</span>)</td>
+            <td class="num" th:text="${#numbers.formatDecimal(portfolio.totalCashValue, 1, 2)}">722400.00</td>
+        </tr>
+        <tr>
+            <td>Себестоимость позиций (<span th:text="${portfolio.baseCurrency}">RUB</span>)</td>
+            <td class="num" th:text="${#numbers.formatDecimal(portfolio.totalCostBasis, 1, 2)}">93000.00</td>
+        </tr>
+        <tr th:if="${portfolio.totalMarketValue != null}">
+            <td>Рыночная стоимость позиций</td>
+            <td class="num" th:text="${#numbers.formatDecimal(portfolio.totalMarketValue, 1, 2)}">—</td>
+        </tr>
+        <tr>
+            <th>Всего</th>
+            <th class="num" th:text="${#numbers.formatDecimal(portfolio.totalPortfolioValue, 1, 2)}">815400.00</th>
+        </tr>
+        </tbody>
+    </table>
+    <p class="empty" th:if="${portfolio.totalMarketValue == null}">
+        Рыночная стоимость появится, когда будет подключён источник цен.
+        Пока «Всего» = деньги + себестоимость позиций в базовой валюте.
+    </p>
+    <p class="empty">
+        В портфеле есть позиции в валютах, отличных от
+        <span th:text="${portfolio.baseCurrency}">RUB</span>.
+        Они не включены в итоги — для конвертации нужен источник курсов.
+    </p>
+</div>
+
+</body>
+</html>

@@ -33,7 +33,10 @@
     <tbody>
     <tr th:each="p : ${portfolios}">
         <td th:text="${p.id}">1</td>
-        <td th:text="${p.name}">Основной</td>
+        <td>
+            <a th:href="@{/ui/portfolios/{id}(id=${p.id})}"
+               th:text="${p.name}">Основной</a>
+        </td>
         <td th:text="${p.baseCurrency}">RUB</td>
         <td th:text="${p.createdAt}">2026-10-16</td>
     </tr>

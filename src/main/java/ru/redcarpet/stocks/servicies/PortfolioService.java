@@ -2,6 +2,7 @@ package ru.redcarpet.stocks.servicies;
 
 import ru.redcarpet.stocks.dto.BalanceResponse;
 import ru.redcarpet.stocks.dto.CreatePortfolioRequest;
+import ru.redcarpet.stocks.ui.dto.PortfolioDetailsResponse;
 import ru.redcarpet.stocks.ui.dto.PortfolioResponse;
 
 import java.util.Currency;
@@ -12,4 +13,5 @@ public interface PortfolioService {
     void create(CreatePortfolioRequest request);
     List<BalanceResponse> getBalances(Long id);
     List<PortfolioResponse> findAll();
+    PortfolioDetailsResponse findById(Long id);
 }

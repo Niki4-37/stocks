@@ -1,10 +1,11 @@
-package ru.redcarpet.stocks.ui;
+package ru.redcarpet.stocks.ui.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import ru.redcarpet.stocks.servicies.PortfolioService;
@@ -47,5 +48,11 @@ public class PortfolioViewController {
             model.addAttribute("error", e.getMessage());
             return "portfolios/form";
         }
+    }
+
+    @GetMapping("/{id}")
+    public String details(@PathVariable Long id, Model model) {
+        model.addAttribute("portfolio", portfolioService.findById(id));
+        return "portfolios/details";
     }
 }
