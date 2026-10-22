@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import ru.redcarpet.stocks.servicies.PortfolioService;
+import ru.redcarpet.stocks.model.service.PortfolioService;
 import ru.redcarpet.stocks.ui.dto.PortfolioForm;
 import ru.redcarpet.stocks.ui.dto.PortfolioResponse;
 

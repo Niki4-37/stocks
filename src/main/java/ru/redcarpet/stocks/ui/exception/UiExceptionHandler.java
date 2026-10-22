@@ -5,7 +5,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
-import ru.redcarpet.stocks.exception.NotFoundException;
+import ru.redcarpet.stocks.model.exception.NotFoundException;
 
 @ControllerAdvice(basePackages = "ru.redcarpet.stocks.ui.controller")
 public class UiExceptionHandler {

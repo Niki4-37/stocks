@@ -31,6 +31,10 @@ dependencies {
     //ui
     implementation ("org.springframework.boot:spring-boot-starter-thymeleaf")
 
+    //reports
+    implementation("org.apache.poi:poi:5.2.5")
+    implementation("org.apache.poi:poi-ooxml:5.2.5")
+
     compileOnly("org.projectlombok:lombok")
     runtimeOnly("org.postgresql:postgresql")
     annotationProcessor("org.projectlombok:lombok")

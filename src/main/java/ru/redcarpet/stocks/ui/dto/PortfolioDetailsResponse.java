@@ -1,9 +1,8 @@
 package ru.redcarpet.stocks.ui.dto;
 
-import ru.redcarpet.stocks.dto.BalanceResponse;
+import ru.redcarpet.stocks.model.dto.BalanceResponse;
 
 import java.math.BigDecimal;
-import java.time.Instant;
 import java.util.Currency;
 import java.util.List;
 

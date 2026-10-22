@@ -3,7 +3,7 @@ package ru.redcarpet.stocks.ui.dto;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import ru.redcarpet.stocks.dto.CreatePortfolioRequest;
+import ru.redcarpet.stocks.model.dto.CreatePortfolioRequest;
 
 import java.math.BigDecimal;
 import java.util.Currency;
