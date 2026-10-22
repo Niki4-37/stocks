@@ -1,10 +1,10 @@
 package ru.redcarpet.stocks.reports.enums;
 
 public enum TableSection {
-    BEFORE(""),
-    DETAILS("1.1."),
-    TOTALS_13("1.3."),
-    AFTER("2.");
+    BLANK(""),
+    CASH_OPERATION("1.1."),
+    TOTAL_FEES_AND_PENALTIES("1.3."),
+    TRADES("2.");
 
     private final String value;
 

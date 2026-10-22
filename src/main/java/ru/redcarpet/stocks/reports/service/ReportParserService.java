@@ -12,8 +12,8 @@ import ru.redcarpet.stocks.reports.dto.OperationRow;
 import ru.redcarpet.stocks.reports.dto.ParseResult;
 import ru.redcarpet.stocks.reports.dto.TotalsEntry;
 import ru.redcarpet.stocks.reports.enums.TableSection;
-import ru.redcarpet.stocks.reports.utils.ColumnLayout;
-import ru.redcarpet.stocks.reports.utils.RowClassifier;
+import ru.redcarpet.stocks.reports.utils.ColumnHeaders;
+import ru.redcarpet.stocks.reports.utils.RowSectionClassifier;
 import ru.redcarpet.stocks.reports.utils.RowMapper;
 
 import java.io.InputStream;
@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 @Service
 public class ReportParserService {
@@ -33,47 +34,47 @@ public class ReportParserService {
             Sheet sheet = wb.getSheetAt(0);
             DataFormatter fmt = new DataFormatter();
 
-            List<OperationRow> details = collectDetails(sheet, fmt);
-            Map<String, BigDecimal> totals = collectTotals13(sheet, fmt);
-            List<CheckRow> checks = buildChecks(details, totals);
+            List<OperationRow> cashOperations = collectRubCashOperations(sheet, fmt);
+            Map<String, BigDecimal> totals = collectFeesAndPenalties(sheet, fmt);
+            List<CheckRow> checks = buildFeesChecks(cashOperations, totals);
 
-            return new ParseResult(details, checks);
+            return new ParseResult(cashOperations, checks);
         }
     }
 
-    private List<OperationRow> collectDetails(Sheet sheet, DataFormatter fmt) {
+    private List<OperationRow> collectRubCashOperations(Sheet sheet, DataFormatter fmt) {
         List<OperationRow> result = new ArrayList<>();
-        ColumnLayout layout = new ColumnLayout();
-        RowMapper mapper = new RowMapper(layout);
-        RowClassifier classifier = new RowClassifier();
+        ColumnHeaders columnHeaders = new ColumnHeaders();
+        RowMapper mapper = new RowMapper(columnHeaders);
+        RowSectionClassifier classifier = new RowSectionClassifier();
 
         for (Row row : sheet) {
             TableSection section = classifier.classify(row, fmt);
-            layout.tryUpdate(row, fmt);
-            if (section != TableSection.DETAILS) continue;
+            columnHeaders.update(row, fmt);
+            if (section != TableSection.CASH_OPERATION) continue;
 
-            OperationRow d = mapper.toDetail(row, fmt);
-            if (d != null) result.add(d);
+            OperationRow operation = mapper.toDetail(row, fmt);
+            if (Objects.nonNull(operation)) result.add(operation);
         }
         return result;
     }
 
-    private Map<String, BigDecimal> collectTotals13(Sheet sheet, DataFormatter fmt) {
+    private Map<String, BigDecimal> collectFeesAndPenalties(Sheet sheet, DataFormatter fmt) {
         Map<String, BigDecimal> totals = new LinkedHashMap<>();
-        ColumnLayout layout = new ColumnLayout();
-        RowMapper mapper = new RowMapper(layout);
-        RowClassifier classifier = new RowClassifier();
+        ColumnHeaders columnHeaders = new ColumnHeaders();
+        RowMapper mapper = new RowMapper(columnHeaders);
+        RowSectionClassifier classifier = new RowSectionClassifier();
 
         for (Row row : sheet) {
             TableSection section = classifier.classify(row, fmt);
-            layout.tryUpdate(row, fmt);
-            if (section != TableSection.TOTALS_13) continue;
+            columnHeaders.update(row, fmt);
+            if (section != TableSection.TOTAL_FEES_AND_PENALTIES) continue;
 
             TotalsEntry entry = mapper.toTotalsEntry(row, fmt);
-            if (entry == null) continue;
+            if (Objects.isNull(entry)) continue;
 
             BigDecimal val = toDecimal(entry.amount());
-            if (val == null) continue;
+            if (Objects.isNull(val)) continue;
 
             totals.merge(key(entry.operation(), entry.platform()),
                     val, BigDecimal::add);
@@ -81,26 +82,26 @@ public class ReportParserService {
         return totals;
     }
 
-    private List<CheckRow> buildChecks(List<OperationRow> details,
-                                       Map<String, BigDecimal> totals13) {
+    private List<CheckRow> buildFeesChecks(List<OperationRow> details,
+                                           Map<String, BigDecimal> totals) {
         Map<String, BigDecimal> detailSums = new LinkedHashMap<>();
-        for (OperationRow r : details) {
-            BigDecimal v = toDecimal(r.amount());
-            if (v == null) continue;
-            detailSums.merge(key(r.operation(), r.platform()),
-                    v, BigDecimal::add);
+        for (OperationRow row : details) {
+            BigDecimal value = toDecimal(row.amount());
+            if (Objects.isNull(value)) continue;
+            detailSums.merge(key(row.operation(), row.platform()),
+                    value, BigDecimal::add);
         }
 
         List<CheckRow> checks = new ArrayList<>();
 
-        for (Map.Entry<String, BigDecimal> e : totals13.entrySet()) {
+        for (Map.Entry<String, BigDecimal> e : totals.entrySet()) {
             String[] parts = splitKey(e.getKey());
             BigDecimal detail = detailSums.getOrDefault(e.getKey(), BigDecimal.ZERO);
             checks.add(new CheckRow(parts[0], parts[1], detail, e.getValue(),
                     detail.compareTo(e.getValue()) == 0));
         }
         for (Map.Entry<String, BigDecimal> e : detailSums.entrySet()) {
-            if (totals13.containsKey(e.getKey())) continue;
+            if (totals.containsKey(e.getKey())) continue;
             String[] parts = splitKey(e.getKey());
             checks.add(new CheckRow(parts[0], parts[1],
                     e.getValue(), BigDecimal.ZERO, false));
