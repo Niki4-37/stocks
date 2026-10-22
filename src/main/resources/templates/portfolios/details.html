@@ -14,11 +14,32 @@
         .empty { color: #888; font-style: italic; }
         .section { margin-bottom: 2rem; }
         .back { margin-bottom: 1rem; display: inline-block; }
+        .toolbar {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        .toolbar .back { margin-bottom: 0; }
+        .button {
+            display: inline-block;
+            padding: 0.4rem 0.9rem;
+            border: 1px solid #2a6df4;
+            border-radius: 4px;
+            background: #2a6df4;
+            color: #fff;
+            text-decoration: none;
+            font-size: 0.95rem;
+        }
+        .button:hover { background: #1f57c9; border-color: #1f57c9; }
     </style>
 </head>
 <body>
 
-<a class="back" th:href="@{/ui/portfolios}">← К списку портфелей</a>
+<div class="toolbar">
+    <a class="back" th:href="@{/ui/portfolios}">← К списку портфелей</a>
+    <a class="button" th:href="@{/ui/reports}">Отчёты</a>
+</div>
 
 <h1 th:text="${portfolio.name}">Основной</h1>
 <p class="meta">
