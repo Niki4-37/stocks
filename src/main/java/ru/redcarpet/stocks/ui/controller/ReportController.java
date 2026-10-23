@@ -20,19 +20,22 @@ public class ReportController {
 
     @GetMapping
     public String page() {
-        return "reports/reports";
+        return "reports/report";
     }
 
     @PostMapping("/upload")
     public String upload(@RequestParam("file") MultipartFile file, Model model) {
         try {
             ParseResult res = parser.parse(file);
-            model.addAttribute("rows", res.rows());
+            model.addAttribute("operations", res.operations());
             model.addAttribute("checks", res.checks());
+            model.addAttribute("stocks",     res.stocks());
+            model.addAttribute("funds",      res.funds());
+            model.addAttribute("currencies", res.currencies());
             model.addAttribute("fileName", file.getOriginalFilename());
         } catch (Exception e) {
             model.addAttribute("error", "Не удалось прочитать файл: " + e.getMessage());
         }
-        return "reports/reports";
+        return "reports/report";
     }
 }

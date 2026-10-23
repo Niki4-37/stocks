@@ -23,7 +23,8 @@ public final class HeaderColumnsMatcher {
     }
 
     /** Точное совпадение (без учёта регистра, с trim). -1 если нет. */
-    private static int findExact(Row row, DataFormatter fmt, String name) {
+    public static int findExact(Row row, DataFormatter fmt, String name) {
+        if (Objects.isNull(row) || Objects.isNull(fmt) || Objects.isNull(name) || name.isEmpty()) return -1;
         for (Cell c : row) {
             if (fmt.formatCellValue(c).trim().equalsIgnoreCase(name)) {
                 return c.getColumnIndex();

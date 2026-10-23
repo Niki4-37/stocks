@@ -8,13 +8,26 @@ import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import ru.redcarpet.stocks.reports.dto.CheckRow;
+import ru.redcarpet.stocks.reports.dto.CurrencyTrade;
+import ru.redcarpet.stocks.reports.dto.FundTrade;
 import ru.redcarpet.stocks.reports.dto.OperationRow;
 import ru.redcarpet.stocks.reports.dto.ParseResult;
+import ru.redcarpet.stocks.reports.dto.SecurityRef;
+import ru.redcarpet.stocks.reports.dto.StockTrade;
 import ru.redcarpet.stocks.reports.dto.TotalsEntry;
+import ru.redcarpet.stocks.reports.dto.TradeRow;
 import ru.redcarpet.stocks.reports.enums.TableSection;
+import ru.redcarpet.stocks.reports.enums.TradeSubsection;
 import ru.redcarpet.stocks.reports.utils.ColumnHeaders;
-import ru.redcarpet.stocks.reports.utils.RowSectionClassifier;
+import ru.redcarpet.stocks.reports.utils.ReportSectionClassifier;
 import ru.redcarpet.stocks.reports.utils.RowMapper;
+import ru.redcarpet.stocks.reports.utils.TradeSubsectionClassifier;
+import ru.redcarpet.stocks.reports.utils.trades.CurrencyRefParser;
+import ru.redcarpet.stocks.reports.utils.trades.CurrencyTradeLayout;
+import ru.redcarpet.stocks.reports.utils.trades.FundTradeLayout;
+import ru.redcarpet.stocks.reports.utils.trades.SecurityRefParser;
+import ru.redcarpet.stocks.reports.utils.trades.StockTradeLayout;
+import ru.redcarpet.stocks.reports.utils.trades.TradeLayout;
 
 import java.io.InputStream;
 import java.math.BigDecimal;
@@ -38,7 +51,12 @@ public class ReportParserService {
             Map<String, BigDecimal> totals = collectFeesAndPenalties(sheet, fmt);
             List<CheckRow> checks = buildFeesChecks(cashOperations, totals);
 
-            return new ParseResult(cashOperations, checks);
+            List<StockTrade> stocks        = new ArrayList<>();
+            List<FundTrade> funds          = new ArrayList<>();
+            List<CurrencyTrade> currencies = new ArrayList<>();
+            collectTrades(sheet, fmt, stocks, funds, currencies);
+
+            return new ParseResult(cashOperations, stocks, funds, currencies, checks);
         }
     }
 
@@ -46,7 +64,7 @@ public class ReportParserService {
         List<OperationRow> result = new ArrayList<>();
         ColumnHeaders columnHeaders = new ColumnHeaders();
         RowMapper mapper = new RowMapper(columnHeaders);
-        RowSectionClassifier classifier = new RowSectionClassifier();
+        ReportSectionClassifier classifier = new ReportSectionClassifier();
 
         for (Row row : sheet) {
             TableSection section = classifier.classify(row, fmt);
@@ -63,7 +81,7 @@ public class ReportParserService {
         Map<String, BigDecimal> totals = new LinkedHashMap<>();
         ColumnHeaders columnHeaders = new ColumnHeaders();
         RowMapper mapper = new RowMapper(columnHeaders);
-        RowSectionClassifier classifier = new RowSectionClassifier();
+        ReportSectionClassifier classifier = new ReportSectionClassifier();
 
         for (Row row : sheet) {
             TableSection section = classifier.classify(row, fmt);
@@ -107,6 +125,61 @@ public class ReportParserService {
                     e.getValue(), BigDecimal.ZERO, false));
         }
         return checks;
+    }
+
+    private void collectTrades(Sheet sheet,
+                               DataFormatter fmt,
+                               List<StockTrade> stocks,
+                               List<FundTrade> funds,
+                               List<CurrencyTrade> currencies) {
+
+        TradeLayout<?> layout = null;
+        SecurityRef current = SecurityRef.EMPTY;
+        ReportSectionClassifier sectionClassifier = new ReportSectionClassifier();
+        TradeSubsectionClassifier subsectionClassifier = new TradeSubsectionClassifier();
+
+        for (Row row : sheet) {
+            TableSection section = sectionClassifier.classify(row, fmt);
+            if (section != TableSection.TRADES) {
+                layout = null;
+                current = SecurityRef.EMPTY;
+                continue;
+            }
+
+            TradeSubsection sub = subsectionClassifier.classify(row, fmt);
+
+            // 1) подраздел сменился → переключаем стратегию
+            if (layout == null || !layout.supports(sub)) {
+                layout = switch (sub) {
+                    case STOCK    -> new StockTradeLayout();
+                    case FUND     -> new FundTradeLayout();
+                    case CURRENCY -> new CurrencyTradeLayout();
+                    case BOND, OVERNIGHT_CB, NONE -> null;
+                };
+                current = SecurityRef.EMPTY;
+                if (layout == null) continue;
+            }
+
+            // 2) строка-идентификатор
+            SecurityRef parsed = (sub == TradeSubsection.CURRENCY)
+                    ? CurrencyRefParser.tryParse(row, fmt)
+                    : SecurityRefParser.tryParse(row, fmt);
+            if (parsed != null) {
+                current = parsed;
+                continue;
+            }
+
+            // 3) шапка
+            if (layout.tryUpdate(row, fmt)) continue;
+
+            // 4) строка сделки — раскидываем по типизированным спискам
+            if (!layout.isValid()) continue;
+
+            Object trade = layout.toTrade(row, fmt, current);
+            if (trade instanceof StockTrade s)          stocks.add(s);
+            else if (trade instanceof FundTrade f)      funds.add(f);
+            else if (trade instanceof CurrencyTrade c)  currencies.add(c);
+        }
     }
 
     // ------------------------------------------------------------------

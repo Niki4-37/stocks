@@ -1,0 +1,52 @@
+package ru.redcarpet.stocks.reports.utils.trades;
+
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.DataFormatter;
+import org.apache.poi.ss.usermodel.Row;
+import ru.redcarpet.stocks.reports.dto.SecurityRef;
+
+/** Распознаёт строку-идентификатор валютной подтаблицы: EURRUB_TOM | Валюта лота: | EUR | Сопряж. валюта: | Рубль. */
+public final class CurrencyRefParser {
+
+    private static final String LOT_LABEL     = "Валюта лота:";
+    private static final String COUNTER_LABEL = "Сопряж. валюта:";
+
+    private CurrencyRefParser() {}
+
+    /** @return SecurityRef(ticker=инструмент, name=валюта лота) или null, если не идентификатор. */
+    public static SecurityRef tryParse(Row row, DataFormatter fmt) {
+        if (row == null) return null;
+
+        String instrument = firstNonBlank(row, fmt);
+        if (instrument.isBlank()) return null;
+
+        String lot = valueAfterLabel(row, fmt, LOT_LABEL);
+        String counter = valueAfterLabel(row, fmt, COUNTER_LABEL);
+        if (lot.isBlank() && counter.isBlank()) return null;
+
+        // ticker = "EURRUB_TOM", name = "EUR/RUB" (лот/сопряж.)
+        String name = (lot.isBlank() ? "?" : lot) + "/" + (counter.isBlank() ? "?" : counter);
+        return new SecurityRef(instrument, "", "", name);
+    }
+
+    private static String firstNonBlank(Row row, DataFormatter fmt) {
+        for (Cell c : row) {
+            String v = fmt.formatCellValue(c).trim();
+            if (!v.isEmpty()) return v;
+        }
+        return "";
+    }
+
+    private static String valueAfterLabel(Row row, DataFormatter fmt, String label) {
+        boolean found = false;
+        for (Cell c : row) {
+            String v = fmt.formatCellValue(c).trim();
+            if (found) {
+                if (!v.isEmpty()) return v;
+                continue;
+            }
+            if (v.equalsIgnoreCase(label)) found = true;
+        }
+        return "";
+    }
+}
