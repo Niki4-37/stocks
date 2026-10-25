@@ -32,7 +32,7 @@ public final class CurrencyTradeLayout implements TradeLayout<CurrencyTrade> {
     private boolean valid;
 
     @Override
-    public boolean supports(TradeSubsection subsection) {
+    public boolean isSupports(TradeSubsection subsection) {
         return subsection == TradeSubsection.CURRENCY;
     }
 

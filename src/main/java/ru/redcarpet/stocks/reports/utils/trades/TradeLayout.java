@@ -12,7 +12,7 @@ import ru.redcarpet.stocks.reports.enums.TradeSubsection;
 public interface TradeLayout<T> {
 
     /** Соответствует ли стратегия подразделу. */
-    boolean supports(TradeSubsection subsection);
+    boolean isSupports(TradeSubsection subsection);
 
     /** Распознаёт шапку. true — индексы обновлены. */
     boolean tryUpdate(Row row, DataFormatter fmt);

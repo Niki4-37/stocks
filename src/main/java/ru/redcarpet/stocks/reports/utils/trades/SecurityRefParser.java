@@ -6,6 +6,7 @@ import org.apache.poi.ss.usermodel.Row;
 import ru.redcarpet.stocks.reports.dto.SecurityRef;
 
 /** Извлекает SecurityRef из строки-идентификатора бумаги в разделе 2.1. */
+// !!!Здесь неправильно определяется название ценной бумаги!!!
 public final class SecurityRefParser {
 
     private static final String ISIN_LABEL = "ISIN:";

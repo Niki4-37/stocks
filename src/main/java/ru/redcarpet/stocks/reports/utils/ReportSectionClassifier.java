@@ -4,18 +4,18 @@ import org.apache.logging.log4j.util.Strings;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.DataFormatter;
 import org.apache.poi.ss.usermodel.Row;
-import ru.redcarpet.stocks.reports.enums.TableSection;
+import ru.redcarpet.stocks.reports.enums.ReportSection;
 
 import java.util.Objects;
 
 /** Определяет, к какому разделу отчёта относится строка по её тексту. */
 public final class ReportSectionClassifier {
 
-    private TableSection current = TableSection.BLANK;
+    private ReportSection current = ReportSection.NONE;
 
-    public TableSection classify(Row row, DataFormatter fmt) {
+    public ReportSection classify(Row row, DataFormatter fmt) {
         if (Objects.isNull(row) || Objects.isNull(fmt)) return current;
-        TableSection next = TableSection.byMarker(getSectionMarker(rowText(row, fmt)));
+        ReportSection next = ReportSection.byMarker(getSectionMarker(rowText(row, fmt)));
         if (Objects.nonNull(next)) current = next;
         return current; // <-- всегда возвращаем текущую секцию, даже если строка не маркер
     }

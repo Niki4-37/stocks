@@ -7,7 +7,7 @@ import ru.redcarpet.stocks.reports.enums.TradeSubsection;
 public final class StockTradeLayout extends SecurityTradeLayout<StockTrade> {
 
     @Override
-    public boolean supports(TradeSubsection subsection) {
+    public boolean isSupports(TradeSubsection subsection) {
         return subsection == TradeSubsection.STOCK;
     }
 

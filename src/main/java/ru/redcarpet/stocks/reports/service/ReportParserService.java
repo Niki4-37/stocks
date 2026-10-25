@@ -12,22 +12,21 @@ import ru.redcarpet.stocks.reports.dto.CurrencyTrade;
 import ru.redcarpet.stocks.reports.dto.FundTrade;
 import ru.redcarpet.stocks.reports.dto.OperationRow;
 import ru.redcarpet.stocks.reports.dto.ParseResult;
+import ru.redcarpet.stocks.reports.dto.SectionRows;
 import ru.redcarpet.stocks.reports.dto.SecurityRef;
 import ru.redcarpet.stocks.reports.dto.StockTrade;
 import ru.redcarpet.stocks.reports.dto.TotalsEntry;
-import ru.redcarpet.stocks.reports.dto.TradeRow;
-import ru.redcarpet.stocks.reports.enums.TableSection;
+import ru.redcarpet.stocks.reports.dto.TradesResult;
+import ru.redcarpet.stocks.reports.enums.ReportSection;
 import ru.redcarpet.stocks.reports.enums.TradeSubsection;
 import ru.redcarpet.stocks.reports.utils.ColumnHeaders;
 import ru.redcarpet.stocks.reports.utils.ReportSectionClassifier;
 import ru.redcarpet.stocks.reports.utils.RowMapper;
 import ru.redcarpet.stocks.reports.utils.TradeSubsectionClassifier;
 import ru.redcarpet.stocks.reports.utils.trades.CurrencyRefParser;
-import ru.redcarpet.stocks.reports.utils.trades.CurrencyTradeLayout;
-import ru.redcarpet.stocks.reports.utils.trades.FundTradeLayout;
 import ru.redcarpet.stocks.reports.utils.trades.SecurityRefParser;
-import ru.redcarpet.stocks.reports.utils.trades.StockTradeLayout;
 import ru.redcarpet.stocks.reports.utils.trades.TradeLayout;
+import ru.redcarpet.stocks.reports.utils.trades.TradeLayoutFactory;
 
 import java.io.InputStream;
 import java.math.BigDecimal;
@@ -47,50 +46,60 @@ public class ReportParserService {
             Sheet sheet = wb.getSheetAt(0);
             DataFormatter fmt = new DataFormatter();
 
-            List<OperationRow> cashOperations = collectRubCashOperations(sheet, fmt);
-            Map<String, BigDecimal> totals = collectFeesAndPenalties(sheet, fmt);
-            List<CheckRow> checks = buildFeesChecks(cashOperations, totals);
+            SectionRows slices = sliceSections(sheet, fmt);
 
-            List<StockTrade> stocks        = new ArrayList<>();
-            List<FundTrade> funds          = new ArrayList<>();
-            List<CurrencyTrade> currencies = new ArrayList<>();
-            collectTrades(sheet, fmt, stocks, funds, currencies);
+            List<OperationRow> cash = collectRubCashOperations(slices.cashOperations(), fmt);
+            Map<String, BigDecimal> fees = collectFeesAndPenalties(slices.feesAndPenalties(), fmt);
+            TradesResult trades = collectTrades(slices.trades(), fmt);
+            List<CheckRow> checks = buildFeesChecks(cash, fees);
 
-            return new ParseResult(cashOperations, stocks, funds, currencies, checks);
+            return new ParseResult(cash, trades.stocks(), trades.funds(), trades.currencies(), checks);
         }
     }
 
-    private List<OperationRow> collectRubCashOperations(Sheet sheet, DataFormatter fmt) {
+    private SectionRows sliceSections(Sheet sheet, DataFormatter fmt) {
+        List<Row> cash = new ArrayList<>();
+        List<Row> fees = new ArrayList<>();
+        List<Row> trades = new ArrayList<>();
+
+        ReportSectionClassifier sectionClassifier = new ReportSectionClassifier();
+
+        for (Row row : sheet) {
+            ReportSection section = sectionClassifier.classify(row, fmt);
+            switch (section) {
+                case CASH_OPERATION         -> cash.add(row);
+                case TOTAL_FEES_AND_PENALTIES -> fees.add(row);
+                case TRADES                 -> trades.add(row);
+                default -> { /* BLANK и прочее — пропускаем */ }
+            }
+        }
+        return new SectionRows(cash, fees, trades);
+    }
+
+    private List<OperationRow> collectRubCashOperations(List<Row> rubCashOperationRows, DataFormatter fmt) {
         List<OperationRow> result = new ArrayList<>();
         ColumnHeaders columnHeaders = new ColumnHeaders();
         RowMapper mapper = new RowMapper(columnHeaders);
-        ReportSectionClassifier classifier = new ReportSectionClassifier();
 
-        for (Row row : sheet) {
-            TableSection section = classifier.classify(row, fmt);
+        for (Row row : rubCashOperationRows) {
             columnHeaders.update(row, fmt);
-            if (section != TableSection.CASH_OPERATION) continue;
-
-            OperationRow operation = mapper.toDetail(row, fmt);
+            if (!columnHeaders.isValid()) continue;
+            OperationRow operation = mapper.toRubCashOperation(row, fmt);
             if (Objects.nonNull(operation)) result.add(operation);
         }
         return result;
     }
 
-    private Map<String, BigDecimal> collectFeesAndPenalties(Sheet sheet, DataFormatter fmt) {
+    private Map<String, BigDecimal> collectFeesAndPenalties(List<Row> feesAndPenaltiesRows, DataFormatter fmt) {
         Map<String, BigDecimal> totals = new LinkedHashMap<>();
         ColumnHeaders columnHeaders = new ColumnHeaders();
         RowMapper mapper = new RowMapper(columnHeaders);
-        ReportSectionClassifier classifier = new ReportSectionClassifier();
 
-        for (Row row : sheet) {
-            TableSection section = classifier.classify(row, fmt);
+        for (Row row : feesAndPenaltiesRows) {
             columnHeaders.update(row, fmt);
-            if (section != TableSection.TOTAL_FEES_AND_PENALTIES) continue;
-
+            if (!columnHeaders.isValid()) continue;
             TotalsEntry entry = mapper.toTotalsEntry(row, fmt);
             if (Objects.isNull(entry)) continue;
-
             BigDecimal val = toDecimal(entry.amount());
             if (Objects.isNull(val)) continue;
 
@@ -127,59 +136,44 @@ public class ReportParserService {
         return checks;
     }
 
-    private void collectTrades(Sheet sheet,
-                               DataFormatter fmt,
-                               List<StockTrade> stocks,
-                               List<FundTrade> funds,
-                               List<CurrencyTrade> currencies) {
-
-        TradeLayout<?> layout = null;
-        SecurityRef current = SecurityRef.EMPTY;
-        ReportSectionClassifier sectionClassifier = new ReportSectionClassifier();
+    private TradesResult collectTrades(List<Row> tradeRows, DataFormatter fmt) {
+        TradeLayout<?> tradeLayout = null;
+        SecurityRef currentSecurityRef = SecurityRef.EMPTY;
         TradeSubsectionClassifier subsectionClassifier = new TradeSubsectionClassifier();
-
-        for (Row row : sheet) {
-            TableSection section = sectionClassifier.classify(row, fmt);
-            if (section != TableSection.TRADES) {
-                layout = null;
-                current = SecurityRef.EMPTY;
-                continue;
-            }
-
-            TradeSubsection sub = subsectionClassifier.classify(row, fmt);
+        List<StockTrade> stocks = new ArrayList<>();
+        List<FundTrade> funds = new ArrayList<>();
+        List<CurrencyTrade> currencies = new ArrayList<>();
+        for (Row row : tradeRows) {
+            TradeSubsection subSection = subsectionClassifier.classify(row, fmt);
 
             // 1) подраздел сменился → переключаем стратегию
-            if (layout == null || !layout.supports(sub)) {
-                layout = switch (sub) {
-                    case STOCK    -> new StockTradeLayout();
-                    case FUND     -> new FundTradeLayout();
-                    case CURRENCY -> new CurrencyTradeLayout();
-                    case BOND, OVERNIGHT_CB, NONE -> null;
-                };
-                current = SecurityRef.EMPTY;
-                if (layout == null) continue;
+            if (Objects.isNull(tradeLayout) || !tradeLayout.isSupports(subSection)) {
+                tradeLayout = TradeLayoutFactory.create(subSection);
+                currentSecurityRef = SecurityRef.EMPTY;
+                if (Objects.isNull(tradeLayout)) continue;
             }
 
             // 2) строка-идентификатор
-            SecurityRef parsed = (sub == TradeSubsection.CURRENCY)
+            SecurityRef parsed = (subSection == TradeSubsection.CURRENCY)
                     ? CurrencyRefParser.tryParse(row, fmt)
                     : SecurityRefParser.tryParse(row, fmt);
-            if (parsed != null) {
-                current = parsed;
+            if (Objects.nonNull(parsed)) {
+                currentSecurityRef = parsed;
                 continue;
             }
 
             // 3) шапка
-            if (layout.tryUpdate(row, fmt)) continue;
+            if (tradeLayout.tryUpdate(row, fmt)) continue;
 
             // 4) строка сделки — раскидываем по типизированным спискам
-            if (!layout.isValid()) continue;
+            if (!tradeLayout.isValid()) continue;
 
-            Object trade = layout.toTrade(row, fmt, current);
+            Object trade = tradeLayout.toTrade(row, fmt, currentSecurityRef);
             if (trade instanceof StockTrade s)          stocks.add(s);
             else if (trade instanceof FundTrade f)      funds.add(f);
             else if (trade instanceof CurrencyTrade c)  currencies.add(c);
         }
+        return new TradesResult(stocks, funds, currencies);
     }
 
     // ------------------------------------------------------------------

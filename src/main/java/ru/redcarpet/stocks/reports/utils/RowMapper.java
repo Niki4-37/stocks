@@ -19,7 +19,7 @@ public final class RowMapper {
     }
 
     /** Детальная строка раздела 1.1 или null, если не подходит. */
-    public OperationRow toDetail(Row row, DataFormatter fmt) {
+    public OperationRow toRubCashOperation(Row row, DataFormatter fmt) {
         if (!columnHeaders.isValid() || !columnHeaders.hasDate()) return null;
 
         String date = columnHeaders.date(row, fmt);

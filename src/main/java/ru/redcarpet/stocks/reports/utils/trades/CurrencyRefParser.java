@@ -1,9 +1,12 @@
 package ru.redcarpet.stocks.reports.utils.trades;
 
+import org.apache.logging.log4j.util.Strings;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.DataFormatter;
 import org.apache.poi.ss.usermodel.Row;
 import ru.redcarpet.stocks.reports.dto.SecurityRef;
+
+import java.util.Objects;
 
 /** Распознаёт строку-идентификатор валютной подтаблицы: EURRUB_TOM | Валюта лота: | EUR | Сопряж. валюта: | Рубль. */
 public final class CurrencyRefParser {
@@ -15,7 +18,7 @@ public final class CurrencyRefParser {
 
     /** @return SecurityRef(ticker=инструмент, name=валюта лота) или null, если не идентификатор. */
     public static SecurityRef tryParse(Row row, DataFormatter fmt) {
-        if (row == null) return null;
+        if (Objects.isNull(row)) return null;
 
         String instrument = firstNonBlank(row, fmt);
         if (instrument.isBlank()) return null;
@@ -34,7 +37,7 @@ public final class CurrencyRefParser {
             String v = fmt.formatCellValue(c).trim();
             if (!v.isEmpty()) return v;
         }
-        return "";
+        return Strings.EMPTY;
     }
 
     private static String valueAfterLabel(Row row, DataFormatter fmt, String label) {
@@ -47,6 +50,6 @@ public final class CurrencyRefParser {
             }
             if (v.equalsIgnoreCase(label)) found = true;
         }
-        return "";
+        return Strings.EMPTY;
     }
 }
