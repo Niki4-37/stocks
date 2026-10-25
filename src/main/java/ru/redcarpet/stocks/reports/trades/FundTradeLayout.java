@@ -1,4 +1,4 @@
-package ru.redcarpet.stocks.reports.utils.trades;
+package ru.redcarpet.stocks.reports.trades;
 
 import ru.redcarpet.stocks.reports.dto.FundTrade;
 import ru.redcarpet.stocks.reports.dto.SecurityRef;

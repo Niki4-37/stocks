@@ -1,4 +1,4 @@
-package ru.redcarpet.stocks.reports.utils;
+package ru.redcarpet.stocks.reports.common;
 
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.DataFormatter;

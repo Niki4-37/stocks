@@ -1,4 +1,4 @@
-package ru.redcarpet.stocks.reports.utils;
+package ru.redcarpet.stocks.reports.common;
 
 import java.util.Set;
 

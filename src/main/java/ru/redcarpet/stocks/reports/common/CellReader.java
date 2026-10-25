@@ -1,4 +1,4 @@
-package ru.redcarpet.stocks.reports.utils;
+package ru.redcarpet.stocks.reports.common;
 
 import org.apache.logging.log4j.util.Strings;
 import org.apache.poi.ss.usermodel.Cell;

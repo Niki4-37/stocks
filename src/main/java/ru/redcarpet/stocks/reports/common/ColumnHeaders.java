@@ -1,9 +1,9 @@
-package ru.redcarpet.stocks.reports.utils;
+package ru.redcarpet.stocks.reports.common;
 
 import org.apache.poi.ss.usermodel.DataFormatter;
 import org.apache.poi.ss.usermodel.Row;
 
-import static ru.redcarpet.stocks.reports.utils.HeaderColumnsMatcher.findFirst;
+import static ru.redcarpet.stocks.reports.common.HeaderColumnsMatcher.findFirst;
 
 /**
  * Индексы столбцов текущей таблицы отчёта БКС.

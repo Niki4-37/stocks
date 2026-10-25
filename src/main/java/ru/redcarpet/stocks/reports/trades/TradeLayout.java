@@ -1,4 +1,4 @@
-package ru.redcarpet.stocks.reports.utils.trades;
+package ru.redcarpet.stocks.reports.trades;
 
 import org.apache.poi.ss.usermodel.DataFormatter;
 import org.apache.poi.ss.usermodel.Row;

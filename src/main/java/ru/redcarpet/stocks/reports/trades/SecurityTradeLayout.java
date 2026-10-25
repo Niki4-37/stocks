@@ -1,11 +1,11 @@
-package ru.redcarpet.stocks.reports.utils.trades;
+package ru.redcarpet.stocks.reports.trades;
 
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.DataFormatter;
 import org.apache.poi.ss.usermodel.Row;
 import ru.redcarpet.stocks.reports.dto.SecurityRef;
-import ru.redcarpet.stocks.reports.utils.CellReader;
-import ru.redcarpet.stocks.reports.utils.HeaderColumnsMatcher;
+import ru.redcarpet.stocks.reports.common.CellReader;
+import ru.redcarpet.stocks.reports.common.HeaderColumnsMatcher;
 
 import java.util.ArrayList;
 import java.util.List;
