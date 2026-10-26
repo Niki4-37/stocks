@@ -7,7 +7,9 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import ru.redcarpet.stocks.reports.cashflow.CashOperationParser;
+import ru.redcarpet.stocks.reports.cashflow.CashParseResult;
+import ru.redcarpet.stocks.reports.cashflow.CashParser;
+import ru.redcarpet.stocks.reports.cashflow.CashRowMapper;
 import ru.redcarpet.stocks.reports.cashflow.FeesChecksBuilder;
 import ru.redcarpet.stocks.reports.common.ReportSlicer;
 import ru.redcarpet.stocks.reports.dto.CheckRow;
@@ -28,10 +30,11 @@ import java.util.Map;
 public class ReportParserService {
 
     private final ReportSlicer slicer;
-    private final CashOperationParser cashOperationParser;
+    private final CashParser cashOperationParser;
     private final FeesAndPenaltiesParser feesParser;
     private final TradesParser tradesParser;
     private final FeesChecksBuilder checksBuilder;
+    private final CashRowMapper mapper;
 
     public ParseResult parse(MultipartFile file) throws Exception {
         try (InputStream is = file.getInputStream();
@@ -42,12 +45,12 @@ public class ReportParserService {
 
             SectionRows sections = slicer.slice(sheet, fmt);
 
-            List<CashFlowRow> operations = cashOperationParser.parse(sections.cashOperations(), fmt);
-            Map<String, BigDecimal> totals = feesParser.parse(sections.feesAndPenalties(), fmt);
+            CashParseResult cashFlows = cashOperationParser.parse(sections.cashOperations(), fmt, mapper);
+            Map<String, BigDecimal> totals = feesParser.parse(sections.feesAndPenalties(), fmt, mapper);
             TradesResult trades = tradesParser.parse(sections.trades(), fmt);
-            List<CheckRow> checks = checksBuilder.build(operations, totals);
+            List<CheckRow> checks = checksBuilder.build(cashFlows.expenses(), totals);
 
-            return new ParseResult(operations, trades.stocks(), trades.funds(),
+            return new ParseResult(cashFlows, trades.stocks(), trades.funds(),
                     trades.bonds(), trades.currencies(), checks);
         }
     }

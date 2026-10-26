@@ -16,7 +16,6 @@ public final class ColumnHeaders {
     private int operationCol = -1;
     private int incomeCol = -1;
     private int expenseCol = -1;
-    private int amountCol = -1;   // для 1.3: "Сумма списания" или "Начисленная комиссия"
     private int platformCol = -1;
     private int noteCol = -1;
     private boolean valid;
@@ -41,13 +40,13 @@ public final class ColumnHeaders {
 
     /** Шапка 1.3: «Сумма списания» ИЛИ «Начисленная комиссия» + «Площадка» + «Операция/Вид сбора». */
     public boolean tryUpdateFees(Row row, DataFormatter fmt) {
-        int cOp   = findFirst(row, fmt, ColumnNames.OPERATION);
-        int cAmt  = findFirst(row, fmt, ColumnNames.AMOUNT);
-        int cPlat = findFirst(row, fmt, ColumnNames.PLATFORM);
-        if (cOp < 0 || cAmt < 0 || cPlat < 0) return false;
+        int cOp =       findFirst(row, fmt, ColumnNames.OPERATION);
+        int cExpense =  findFirst(row, fmt, ColumnNames.EXPENSE);
+        int cPlat =     findFirst(row, fmt, ColumnNames.PLATFORM);
+        if (cOp < 0 || cExpense < 0 || cPlat < 0) return false;
 
         this.operationCol = cOp;
-        this.amountCol    = cAmt;
+        this.expenseCol   = cExpense;
         this.platformCol  = cPlat;
         this.valid        = true;
         return true;
@@ -60,7 +59,6 @@ public final class ColumnHeaders {
     public String operation(Row row, DataFormatter fmt) { return CellReader.read(row, operationCol, fmt); }
     public String income(Row row, DataFormatter fmt)    { return CellReader.read(row, incomeCol, fmt); }
     public String expense(Row row, DataFormatter fmt)   { return CellReader.read(row, expenseCol, fmt); }
-    public String amount(Row row, DataFormatter fmt)    { return CellReader.read(row, amountCol, fmt); }
     public String platform(Row row, DataFormatter fmt)  { return CellReader.read(row, platformCol, fmt); }
     public String note(Row row, DataFormatter fmt)      { return CellReader.read(row, noteCol, fmt); }
 }

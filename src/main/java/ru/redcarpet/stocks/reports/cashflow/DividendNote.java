@@ -1,10 +1,12 @@
 package ru.redcarpet.stocks.reports.cashflow;
 
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /** Разбор поля «Примечание» у дивидендов. */
 public record DividendNote(
+        String raw,
         String issuer,
         String isin,
         String recordDate,   // дата фиксации
@@ -21,14 +23,14 @@ public record DividendNote(
             Pattern.compile("налог\\s+([^,]+)", Pattern.CASE_INSENSITIVE);
 
     public static DividendNote parse(String note) {
-        if (note == null || note.isBlank()) return null;
+        if (Objects.isNull(note) || note.isBlank()) return null;
 
         String isin = find(ISIN_PATTERN, note);
         String date = find(RECORD_DATE_PATTERN, note);
         String tax  = find(TAX_PATTERN, note);
         String issuer = extractIssuer(note);
 
-        return new DividendNote(issuer, isin, date, tax);
+        return new DividendNote(note, issuer, isin, date, tax);
     }
 
     /** Эмитент — часть до ", <год> г." (с учётом запятых внутри кавычек). */

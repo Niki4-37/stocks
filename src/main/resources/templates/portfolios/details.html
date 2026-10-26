@@ -38,7 +38,7 @@
 
 <div class="toolbar">
     <a class="back" th:href="@{/ui/portfolios}">← К списку портфелей</a>
-    <a class="button" th:href="@{/ui/reports}">Отчёты</a>
+    <a class="button" th:href="@{/ui/reports(portfolioId=${portfolio.id})}">Отчёты</a>
 </div>
 
 <h1 th:text="${portfolio.name}">Основной</h1>

@@ -2,12 +2,16 @@ package ru.redcarpet.stocks.model.service.impl;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import ru.redcarpet.stocks.model.dto.CreateEventRequest;
+import ru.redcarpet.stocks.verification.trades.TradeKeyDto;
 import ru.redcarpet.stocks.model.entity.Event;
 import ru.redcarpet.stocks.model.entity.Portfolio;
 import ru.redcarpet.stocks.model.entity.Security;
 import ru.redcarpet.stocks.model.enums.OperationType;
+import ru.redcarpet.stocks.verification.trades.TradeSource;
+import ru.redcarpet.stocks.model.exception.ConflictException;
 import ru.redcarpet.stocks.model.exception.NotFoundException;
 import ru.redcarpet.stocks.model.exception.ValidationException;
 import ru.redcarpet.stocks.model.repositories.EventRepository;
@@ -19,6 +23,7 @@ import ru.redcarpet.stocks.model.service.HoldingService;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
 import java.util.Currency;
 import java.util.Objects;
 
@@ -54,6 +59,44 @@ public class EventServiceImpl implements EventService {
         Event saved = eventRepository.save(event);
 
         holdingService.applyEvent(saved);
+    }
+
+    @Override
+    public Event createFromTrade(
+            TradeKeyDto key,
+            Long portfolioId,
+            OperationType type,
+            BigDecimal price,
+            BigDecimal quantity,
+            Currency currency,
+            BigDecimal amount
+    ) {
+        Portfolio portfolio = portfolioRepository.findById(portfolioId)
+                .orElseThrow(() -> new NotFoundException("Portfolio not found: " + portfolioId));
+        Security security = securityRepository.findByIsin(key.tradeIsin())
+                .orElseThrow(() -> new NotFoundException("Security not found: " + key.tradeIsin()));
+
+        Event event = new Event();
+        event.setPortfolio(portfolio);
+        event.setSecurity(security);
+        event.setOperationType(type);
+        event.setEventDate(LocalDate.now());        // или дата из отчёта, см. ниже
+        event.setPrice(price);
+        event.setQuantity(quantity);
+        event.setCurrency(currency);
+        event.setAmount(amount);
+
+        // внешний ключ
+        event.setTradeNumber(key.tradeNumber());
+        event.setTradeDate(key.tradeDate());
+        event.setTradeIsin(key.tradeIsin());
+        event.setTradeSource(TradeSource.BROKER_REPORT);
+
+        try {
+            return eventRepository.save(event);
+        } catch (DataIntegrityViolationException e) {
+            throw new ConflictException("Trade already exists: " + key.tradeNumber());
+        }
     }
 
     private Security resolveSecurity(CreateEventRequest request) {

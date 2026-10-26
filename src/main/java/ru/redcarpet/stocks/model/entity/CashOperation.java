@@ -16,7 +16,9 @@ import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import ru.redcarpet.stocks.model.enums.CashFlowDirection;
 import ru.redcarpet.stocks.model.enums.CashOperationType;
+import ru.redcarpet.stocks.verification.trades.TradeSource;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -42,6 +44,10 @@ public class CashOperation {
     @Column(name = "operation_type", nullable = false, length = 32)
     private CashOperationType operationType;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 8)
+    private CashFlowDirection direction;
+
     @Column(name = "operation_date", nullable = false)
     private LocalDate operationDate;
 
@@ -62,6 +68,25 @@ public class CashOperation {
 
     @Column(name = "comment", length = 500)
     private String comment;
+
+    @Column(length = 64)
+    private String platform;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 32)
+    private TradeSource source;
+
+    @Column(name = "dividend_issuer", length = 200)
+    private String dividendIssuer;
+
+    @Column(name = "dividend_isin", length = 12)
+    private String dividendIsin;
+
+    @Column(name = "dividend_record_date")
+    private LocalDate dividendRecordDate;
+
+    @Column(name = "dividend_tax", length = 64)
+    private String dividendTax;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;

@@ -1,4 +1,4 @@
-package ru.redcarpet.stocks.reports.cashflow;
+package ru.redcarpet.stocks.reports.common;
 
 import java.math.BigDecimal;
 import java.util.Objects;

@@ -17,6 +17,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import ru.redcarpet.stocks.model.enums.OperationType;
+import ru.redcarpet.stocks.verification.trades.TradeSource;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -63,6 +64,19 @@ public class Event {
 
     @Column(nullable = false, precision = 19, scale = 2)
     private BigDecimal amount;
+
+    @Column(name = "trade_number", length = 64)
+    private String tradeNumber;
+
+    @Column(name = "trade_date")
+    private LocalDate tradeDate;
+
+    @Column(name = "trade_isin", length = 12)
+    private String tradeIsin;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "trade_source", length = 32)
+    private TradeSource tradeSource;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;

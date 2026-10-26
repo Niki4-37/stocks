@@ -10,6 +10,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import ru.redcarpet.stocks.model.dto.CreateCashOperationRequest;
 import ru.redcarpet.stocks.model.service.CashOperationService;
+import ru.redcarpet.stocks.verification.cash.CashVerificationService;
+import ru.redcarpet.stocks.verification.cash.CashCheckRequest;
+import ru.redcarpet.stocks.verification.cash.CashCheckResponse;
 
 @RestController
 @RequestMapping("/api/cash-operations")
@@ -17,6 +20,7 @@ import ru.redcarpet.stocks.model.service.CashOperationService;
 public class CashOperationController {
 
     private final CashOperationService cashOperationService;
+    private final CashVerificationService verificationService;
 
     @PostMapping
     public ResponseEntity<String> create(
@@ -24,5 +28,10 @@ public class CashOperationController {
     ) {
         cashOperationService.create(request);
         return ResponseEntity.status(HttpStatus.CREATED).body("Cash operation created!");
+    }
+
+    @PostMapping("/check")
+    public CashCheckResponse check(@Valid @RequestBody CashCheckRequest request) {
+        return verificationService.check(request);
     }
 }

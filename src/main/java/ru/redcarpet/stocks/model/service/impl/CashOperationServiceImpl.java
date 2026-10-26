@@ -48,8 +48,8 @@ public class CashOperationServiceImpl implements CashOperationService {
 
         // движение денег
         switch (type.getDirection()) {
-            case IN  -> balanceService.credit(portfolio, request.currency(), amount);
-            case OUT -> balanceService.debit(portfolio, request.currency(), amount);
+            case INCOME  -> balanceService.credit(portfolio, request.currency(), amount);
+            case EXPENSE -> balanceService.debit(portfolio, request.currency(), amount);
         }
 
         CashOperation op = newCashOperation(portfolio, request);

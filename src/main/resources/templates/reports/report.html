@@ -10,6 +10,7 @@
         th { background: #f2f2f2; }
         .error { color: #b00020; }
         .ok { color: #1b7f3a; font-weight: bold; }
+        .warn { color: #b07d00; font-weight: bold; }
         .fail { color: #b00020; font-weight: bold; }
     </style>
 </head>
@@ -17,14 +18,21 @@
 <h2>Загрузка брокерского отчёта БКС (.xls)</h2>
 
 <form th:action="@{/ui/reports/upload}" method="post" enctype="multipart/form-data">
+    <input type="hidden" name="portfolioId" th:value="${portfolioId}">
     <input type="file" name="file" accept=".xls,.xlsx" required>
-    <button type="submit">Разобрать</button>
+    <button type="submit">Разобрать и проверить</button>
 </form>
+
+<p th:if="${portfolioId == null}" class="error">
+    Портфель не выбран — сверка с БД будет недоступна.
+    <a th:href="@{/ui/portfolios}">Выбрать портфель</a>
+</p>
 
 <p class="error" th:if="${error}" th:text="${error}"></p>
 <h3 th:text="'Файл: ' + ${fileName}"></h3>
 
 <div class="section" th:if="${not #lists.isEmpty(cashIncomes)}">
+    <h2>Движение денежных средств: поступления</h2>
     <h3>Движение денежных средств: поступления</h3>
     <table>
         <thead>
@@ -47,6 +55,35 @@
         </tr>
         </tbody>
     </table>
+
+    <p class="summary" th:if="${not #lists.isEmpty(overnightInterests)}">
+        Проценты по займам «овернайт»:
+        <b th:text="${#lists.size(overnightInterests)}"></b> операций,
+        итого
+        <b th:text="${#numbers.formatDecimal(overnightInterestsTotal, 1, 2)}"></b> ₽
+    </p>
+
+    <details th:if="${not #lists.isEmpty(overnightInterests)}">
+        <summary>Показать проценты овернайт</summary>
+        <table>
+            <thead>
+            <tr>
+                <th>Дата</th><th>Операция</th>
+                <th class="num">Сумма зачисления</th>
+                <th>Валюта</th><th>Площадка</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="r : ${overnightInterests}">
+                <td th:text="${r.date()}"></td>
+                <td th:text="${r.operation()}"></td>
+                <td class="num" th:text="${r.income()}"></td>
+                <td th:text="${r.currency()}"></td>
+                <td th:text="${r.platform()}"></td>
+            </tr>
+            </tbody>
+        </table>
+    </details>
 </div>
 
 <div class="section" th:if="${not #lists.isEmpty(cashExpenses)}">
@@ -55,7 +92,7 @@
         <thead>
         <tr>
             <th>Дата</th><th>Операция</th><th class="num">Сумма списания</th>
-            <th>Площадка</th><th>Примечание</th>
+            <th>Площадка</th>
         </tr>
         </thead>
         <tbody>
@@ -64,7 +101,6 @@
             <td th:text="${r.operation()}"></td>
             <td class="num" th:text="${r.expense()}"></td>
             <td th:text="${r.platform()}"></td>
-            <td th:text="${r.note()}"></td>
         </tr>
         </tbody>
     </table>
@@ -132,7 +168,6 @@
 <!-- ================= Паи ================= -->
 <div class="section" th:if="${not #lists.isEmpty(funds)}">
     <h3>Сделки: Паи</h3>
-    <!-- такая же таблица, как у акций, только ${t} из ${funds} -->
     <table>
         <thead>
         <tr>
@@ -234,5 +269,91 @@
         </tbody>
     </table>
 </div>
+<div class="section" th:if="${verification != null}">
+    <h3>Сверка с БД (портфель <span th:text="${verification.portfolioId()}"></span>)</h3>
+
+    <p>
+        Всего: <b th:text="${verification.summary().total()}"></b>,
+        совпало: <b class="ok" th:text="${verification.summary().matched()}"></b>,
+        отсутствует: <b class="warn" th:text="${verification.summary().missing()}"></b>,
+        конфликтов: <b class="fail" th:text="${verification.summary().conflict()}"></b>
+    </p>
+
+    <table>
+        <thead>
+        <tr>
+            <th>Номер</th>
+            <th>Дата</th>
+            <th>ISIN</th>
+            <th>Статус</th>
+            <th>Event ID</th>
+            <th>Расхождения</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="r : ${verification.results()}">
+            <td th:text="${r.tradeNumber()}"></td>
+            <td th:text="${r.tradeDate()}"></td>
+            <td th:text="${r.tradeIsin()}"></td>
+            <td>
+                <span th:if="${r.status().name() == 'MATCHED'}" class="ok">MATCHED</span>
+                <span th:if="${r.status().name() == 'MISSING'}" class="warn">MISSING</span>
+                <span th:if="${r.status().name() == 'CONFLICT'}" class="fail">CONFLICT</span>
+            </td>
+            <td th:text="${r.eventId()}"></td>
+            <td>
+                <ul th:if="${not #lists.isEmpty(r.differences())}">
+                    <li th:each="d : ${r.differences()}" th:text="${d}"></li>
+                </ul>
+                <span th:if="${#lists.isEmpty(r.differences())}">—</span>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+
+    <p class="empty" th:if="${verification.summary().missing() > 0}">
+        Сделки со статусом MISSING ещё не заведены в БД.
+        Импорт — отдельным шагом (пока не реализован).
+    </p>
+</div>
+
+<div class="section" th:if="${cashVerification != null}">
+    <h3>Сверка движения средств с БД</h3>
+    <p>
+        Всего: <b th:text="${cashVerification.summary().total()}"></b>,
+        совпало: <b class="ok" th:text="${cashVerification.summary().matched()}"></b>,
+        отсутствует: <b class="warn" th:text="${cashVerification.summary().missing()}"></b>
+    </p>
+    <table>
+        <thead>
+        <tr>
+            <th>Дата</th><th>Операция</th><th>Направление</th>
+            <th class="num">Сумма</th><th>Площадка</th><th>Статус</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="r : ${cashVerification.results()}">
+            <td th:text="${r.key().operationDate()}"></td>
+            <td th:text="${r.key().operationType().getDisplayName()}"></td>
+            <td th:text="${r.key().direction()}"></td>
+            <td class="num" th:text="${r.key().amount()}"></td>
+            <td th:text="${r.key().platform()}"></td>
+            <td>
+                <span th:if="${r.status().name() == 'MATCHED'}" class="ok">MATCHED</span>
+                <span th:if="${r.status().name() == 'MISSING'}" class="warn">MISSING</span>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+
+    <form th:if="${cashVerification.summary().missing() > 0}"
+          th:action="@{/ui/reports/upload/import-cash}"
+          method="post" enctype="multipart/form-data">
+        <input type="hidden" name="portfolioId" th:value="${portfolioId}">
+        <input type="file" name="file" accept=".xls,.xlsx" required>
+        <button type="submit">Импортировать отсутствующие</button>
+    </form>
+</div>
+
 </body>
 </html>

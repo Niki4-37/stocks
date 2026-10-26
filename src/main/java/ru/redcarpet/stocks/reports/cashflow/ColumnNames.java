@@ -20,12 +20,8 @@ public final class ColumnNames {
     );
 
     public static final List<String> EXPENSE = List.of(
-            "Сумма списания"
-    );
-
-    public static final List<String> AMOUNT = List.of(
-            "Сумма списания",       // детальная 1.1
-            "Начисленная комиссия"  // итоговая 1.3 (новый формат)
+            "Сумма списания",
+            "Начисленная комиссия"
     );
 
     public static final List<String> PLATFORM = List.of("Площадка");

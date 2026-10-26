@@ -3,6 +3,7 @@ package ru.redcarpet.stocks.reports.cashflow;
 import org.apache.poi.ss.usermodel.DataFormatter;
 import org.apache.poi.ss.usermodel.Row;
 import org.springframework.stereotype.Component;
+import ru.redcarpet.stocks.reports.common.DecimalParser;
 import ru.redcarpet.stocks.reports.dto.TotalsEntry;
 
 import java.math.BigDecimal;
@@ -15,16 +16,15 @@ import java.util.Objects;
 @Component
 public final class FeesAndPenaltiesParser {
 
-    public Map<String, BigDecimal> parse(List<Row> rows, DataFormatter fmt) {
+    public Map<String, BigDecimal> parse(List<Row> rows, DataFormatter fmt, CashRowMapper mapper) {
         Map<String, BigDecimal> totals = new LinkedHashMap<>();
         ColumnHeaders columns = new ColumnHeaders();
-        CahsOperationRowMapper mapper = new CahsOperationRowMapper(columns);
 
         for (Row row : rows) {
             columns.tryUpdateFees(row, fmt);
             if (!columns.isValid()) continue;
 
-            TotalsEntry entry = mapper.toTotalsEntry(row, fmt);
+            TotalsEntry entry = mapper.toTotalsEntry(row, fmt, columns);
             if (Objects.isNull(entry)) continue;
 
             BigDecimal parsedAmount = DecimalParser.parse(entry.amount());

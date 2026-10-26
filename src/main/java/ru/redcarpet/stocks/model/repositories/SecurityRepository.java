@@ -8,4 +8,5 @@ import java.util.Optional;
 public interface SecurityRepository extends JpaRepository<Security, Long> {
 
     Optional<Security> findByTicker(String ticker);
+    Optional<Security> findByIsin(String isin);
 }
