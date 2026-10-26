@@ -1,9 +1,9 @@
-package ru.redcarpet.stocks.reports.checks;
+package ru.redcarpet.stocks.reports.cashflow;
 
 import org.springframework.stereotype.Component;
-import ru.redcarpet.stocks.reports.common.DecimalParser;
 import ru.redcarpet.stocks.reports.dto.CheckRow;
-import ru.redcarpet.stocks.reports.dto.OperationRow;
+import ru.redcarpet.stocks.reports.dto.CashFlowRow;
+import ru.redcarpet.stocks.reports.enums.RowOperationNames;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -11,21 +11,26 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
+
+import static ru.redcarpet.stocks.reports.enums.RowOperationNames.byTitle;
 
 /** Сверка детальных операций 1.1 с итогами 1.3. */
 @Component
 public final class FeesChecksBuilder {
 
     public List<CheckRow> build(
-            List<OperationRow> operations,
+            List<CashFlowRow> operations,
             Map<String, BigDecimal> totalFees
     ) {
         Map<String, BigDecimal> detailSums = new LinkedHashMap<>();
-        for (OperationRow operationRow : operations) {
-            BigDecimal parsedAmount = DecimalParser.parse(operationRow.amount());
+        for (CashFlowRow cashFlowRow : operations) {
+            if (cashFlowRow.direction() != CashFlowRow.Direction.EXPENSE) continue;
+            if (!RowOperationNames.isExpense(cashFlowRow.operation())) continue;
+            BigDecimal parsedAmount = DecimalParser.parse(cashFlowRow.amount());
             if (Objects.isNull(parsedAmount)) continue;
             detailSums.merge(
-                    key(operationRow.operation(), operationRow.platform()),
+                    key(cashFlowRow.operation(), cashFlowRow.platform()),
                     parsedAmount,
                     BigDecimal::add);
         }
