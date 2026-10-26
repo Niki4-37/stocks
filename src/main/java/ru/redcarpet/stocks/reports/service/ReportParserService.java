@@ -48,7 +48,7 @@ public class ReportParserService {
             List<CheckRow> checks = checksBuilder.build(operations, totals);
 
             return new ParseResult(operations, trades.stocks(), trades.funds(),
-                    trades.currencies(), checks);
+                    trades.bonds(), trades.currencies(), checks);
         }
     }
 }

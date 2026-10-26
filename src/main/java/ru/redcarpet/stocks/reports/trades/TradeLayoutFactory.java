@@ -14,8 +14,9 @@ public final class TradeLayoutFactory {
         return (TradeLayout<T>) switch (subsection) {
             case STOCK    -> new StockTradeLayout();
             case FUND     -> new FundTradeLayout();
+            case BOND     -> new BondTradeLayout();
             case CURRENCY -> new CurrencyTradeLayout();
-            case BOND, OVERNIGHT_CB, NONE -> null;
+            case OVERNIGHT_CB, NONE -> null;
         };
     }
 }

@@ -25,7 +25,7 @@
 <h3 th:text="'Файл: ' + ${fileName}"></h3>
 
 <div class="section" th:if="${not #lists.isEmpty(cashIncomes)}">
-    <h2>Движение денежных средств: поступления</h2>
+    <h3>Движение денежных средств: поступления</h3>
     <table>
         <thead>
         <tr>
@@ -50,7 +50,7 @@
 </div>
 
 <div class="section" th:if="${not #lists.isEmpty(cashExpenses)}">
-    <h2>Движение денежных средств: списания</h2>
+    <h3>Движение денежных средств: списания</h3>
     <table>
         <thead>
         <tr>
@@ -98,7 +98,7 @@
 </div>
 
 <div class="section" th:if="${not #lists.isEmpty(stocks)}">
-    <h2>Сделки: Акции</h2>
+    <h3>Сделки: Акции</h3>
     <table>
         <thead>
         <tr>
@@ -131,7 +131,7 @@
 
 <!-- ================= Паи ================= -->
 <div class="section" th:if="${not #lists.isEmpty(funds)}">
-    <h2>Сделки: Паи</h2>
+    <h3>Сделки: Паи</h3>
     <!-- такая же таблица, как у акций, только ${t} из ${funds} -->
     <table>
         <thead>
@@ -158,6 +158,49 @@
             <td class="num" th:text="${t.proceeds()}"></td>
             <td th:text="${t.currency()}"></td>
             <td th:text="${t.deliveryFact()}"></td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+
+<div class="section" th:if="${not #lists.isEmpty(bonds)}">
+    <h3>Сделки: Облигации</h3>
+    <table>
+        <thead>
+        <tr>
+            <th>Код</th><th>ISIN</th><th>Эмитент</th>
+            <th>Дата</th><th>Номер</th>
+            <th class="num">Куплено, шт</th>
+            <th class="num">Цена, %</th>
+            <th class="num">Сумма платежа</th>
+            <th class="num">НКД покупки</th>
+            <th class="num">Продано, шт</th>
+            <th class="num">Цена, %</th>
+            <th class="num">Сумма выручки</th>
+            <th class="num">НКД продажи</th>
+            <th>Валюта</th>
+            <th>Поставка (факт)</th>
+            <th>Место сделки</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="b : ${bonds}">
+            <td th:text="${b.ticker()}"></td>
+            <td th:text="${b.isin()}"></td>
+            <td th:text="${b.securityName()}"></td>
+            <td th:text="${b.date()}"></td>
+            <td th:text="${b.number()}"></td>
+            <td class="num" th:text="${b.boughtQty()}"></td>
+            <td class="num" th:text="${b.buyPrice()}"></td>
+            <td class="num" th:text="${b.paymentAmount()}"></td>
+            <td class="num" th:text="${b.buyAccrued()}"></td>
+            <td class="num" th:text="${b.soldQty()}"></td>
+            <td class="num" th:text="${b.sellPrice()}"></td>
+            <td class="num" th:text="${b.proceeds()}"></td>
+            <td class="num" th:text="${b.sellAccrued()}"></td>
+            <td th:text="${b.currency()}"></td>
+            <td th:text="${b.deliveryFact()}"></td>
+            <td th:text="${b.place()}"></td>
         </tr>
         </tbody>
     </table>

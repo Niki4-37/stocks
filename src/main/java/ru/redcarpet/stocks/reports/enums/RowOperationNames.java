@@ -10,6 +10,7 @@ public enum RowOperationNames {
     SETTLEMENT("Урегулирование сделок",         Flow.EXPENSE, false),
     COMPANY_FEE("Вознаграждение компании",      Flow.EXPENSE, false),
     FIXED_FEE("Фиксированное вознаграждение по тарифу", Flow.EXPENSE, false),
+    NDK_COUPON("НКД от операций",               Flow.ANY, false),
     DIVIDENDS("Дивиденды",                      Flow.INCOME,  true),
     COUPON("Погашение купона",                  Flow.INCOME,  true),
     CASH_INCOME("Приход ДС",                    Flow.INCOME,  false);

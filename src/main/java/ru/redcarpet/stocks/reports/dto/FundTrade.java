@@ -4,7 +4,6 @@ package ru.redcarpet.stocks.reports.dto;
 public record FundTrade(
         String ticker,
         String isin,
-        String regNumber,
         String securityName,
         String date,
         String number,

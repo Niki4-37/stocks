@@ -40,6 +40,7 @@ public class ReportController {
             model.addAttribute("checks", res.checks());
             model.addAttribute("stocks",     res.stocks());
             model.addAttribute("funds",      res.funds());
+            model.addAttribute("bonds",      res.bonds());
             model.addAttribute("currencies", res.currencies());
             model.addAttribute("fileName", file.getOriginalFilename());
         } catch (Exception e) {

@@ -29,7 +29,7 @@ public final class CurrencyRefParser {
 
         // ticker = "EURRUB_TOM", name = "EUR/RUB" (лот/сопряж.)
         String name = (lot.isBlank() ? "?" : lot) + "/" + (counter.isBlank() ? "?" : counter);
-        return new SecurityRef(instrument, "", "", name);
+        return new SecurityRef(instrument, "no ISIN", "no name");
     }
 
     private static String firstNonBlank(Row row, DataFormatter fmt) {

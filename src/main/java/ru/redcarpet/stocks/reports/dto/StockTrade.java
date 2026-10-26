@@ -6,7 +6,6 @@ package ru.redcarpet.stocks.reports.dto;
 public record StockTrade(
         String ticker,
         String isin,
-        String regNumber,
         String securityName,
         String date,          // Дата
         String number,        // Номер

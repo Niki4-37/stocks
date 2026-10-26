@@ -18,7 +18,7 @@ public final class FundTradeLayout extends SecurityTradeLayout<FundTrade> {
                               String soldQty, String sellPrice, String proceeds,
                               String currency, String deliveryFact) {
         return new FundTrade(
-                s.ticker(), s.isin(), s.regNumber(), s.name(),
+                s.ticker(), s.isin(), s.name(),
                 date, number,
                 boughtQty, buyPrice, paymentAmount,
                 soldQty, sellPrice, proceeds,

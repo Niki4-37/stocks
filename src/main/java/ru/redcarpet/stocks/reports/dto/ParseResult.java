@@ -13,6 +13,7 @@ public record ParseResult(
         List<CashFlowRow> cashFlows,
         List<StockTrade> stocks,
         List<FundTrade> funds,
+        List<BondTrade> bonds,
         List<CurrencyTrade> currencies,
         List<CheckRow> checks
 ) {

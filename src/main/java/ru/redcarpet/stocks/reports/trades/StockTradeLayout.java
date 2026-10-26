@@ -18,7 +18,7 @@ public final class StockTradeLayout extends SecurityTradeLayout<StockTrade> {
                                String soldQty, String sellPrice, String proceeds,
                                String currency, String deliveryFact) {
         return new StockTrade(
-                s.ticker(), s.isin(), s.regNumber(), s.name(),
+                s.ticker(), s.isin(), s.name(),
                 date, number,
                 boughtQty, buyPrice, paymentAmount,
                 soldQty, sellPrice, proceeds,
