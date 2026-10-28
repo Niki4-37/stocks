@@ -3,14 +3,10 @@ package ru.redcarpet.stocks.importing;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.redcarpet.stocks.model.entity.CashOperation;
-import ru.redcarpet.stocks.model.entity.Portfolio;
-import ru.redcarpet.stocks.model.enums.CashFlowDirection;
+import ru.redcarpet.stocks.model.dto.CreateCashOperationCommand;
 import ru.redcarpet.stocks.model.enums.CashOperationType;
-import ru.redcarpet.stocks.model.exception.NotFoundException;
 import ru.redcarpet.stocks.model.exception.ValidationException;
-import ru.redcarpet.stocks.model.repositories.CashOperationRepository;
-import ru.redcarpet.stocks.model.repositories.PortfolioRepository;
+import ru.redcarpet.stocks.model.service.CashOperationService;
 import ru.redcarpet.stocks.reports.common.DateParser;
 import ru.redcarpet.stocks.reports.common.DecimalParser;
 import ru.redcarpet.stocks.reports.dto.CashFlowRow;
@@ -18,7 +14,6 @@ import ru.redcarpet.stocks.verification.trades.TradeSource;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.Currency;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,8 +23,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class CashImportService {
 
-    private final CashOperationRepository repository;
-    private final PortfolioRepository portfolioRepository;
+    private final CashOperationService cashOperationService;
 
     /**
      * Импортирует строки 1.1 в cash_operations.
@@ -41,8 +35,7 @@ public class CashImportService {
                            List<CashFlowRow> rows,
                            TradeSource source
     ) {
-        Portfolio portfolio = portfolioRepository.findById(portfolioId)
-                .orElseThrow(() -> new NotFoundException("Portfolio not found: " + portfolioId));
+        if (rows.isEmpty()) return 0;
 
         // группируем отчётные строки по контентному ключу
         Map<String, List<CashFlowRow>> byKey = rows.stream()
@@ -60,46 +53,47 @@ public class CashImportService {
                     .orElseThrow(() -> new ValidationException(
                             "Unknown operation: " + first.operation()));
 
-            CashFlowDirection direction = first.direction();
-
             LocalDate date = DateParser.parseBrokerDate(first.date());
             BigDecimal amount = DecimalParser.parse(first.amount());
 
-            long existing = repository
-                    .countByPortfolioIdAndSourceAndOperationDateAndOperationTypeAndPlatformAndDirectionAndAmountAndCurrency(
-                            portfolioId, source, date, type, first.platform(), direction, amount, first.currency());
+            long existing = cashOperationService.count(
+                    portfolioId, source, date, type,
+                    first.platform(), first.direction(), amount, first.currency());
 
             long toInsert = sameRows.size() - existing;
             for (int i = 0; i < toInsert; i++) {
-                repository.save(build(portfolio, first, type, direction, date, amount, source));
+                cashOperationService.create(toCommand(portfolioId, first, type, date, amount, source));
                 inserted++;
             }
         }
         return inserted;
     }
 
-    private CashOperation build(Portfolio portfolio, CashFlowRow row,
-                                CashOperationType type, CashFlowDirection direction,
-                                LocalDate date, BigDecimal amount,
-                                TradeSource source) {
-        CashOperation op = new CashOperation();
-        op.setPortfolio(portfolio);
-        op.setOperationType(type);
-        op.setDirection(direction);
-        op.setOperationDate(date);
-        op.setCurrency(row.currency());
-        op.setAmount(amount);
-        op.setPlatform(row.platform());
-        op.setSource(source);
-        op.setComment(row.noteRaw());
-
+    private CreateCashOperationCommand toCommand(Long portfolioId, CashFlowRow row,
+                                                 CashOperationType type, LocalDate date,
+                                                 BigDecimal amount, TradeSource source) {
+        CreateCashOperationCommand.DividendFields dividend = null;
         if (type.isDividend() && row.dividendNote() != null) {
-            op.setDividendIssuer(row.dividendNote().issuer());
-            op.setDividendIsin(row.dividendNote().isin());
-            op.setDividendRecordDate(DateParser.parseBrokerDateOrNull(row.dividendNote().recordDate()));
-            op.setDividendTax(row.dividendNote().tax());
+            dividend = new CreateCashOperationCommand.DividendFields(
+                    row.dividendNote().issuer(),
+                    row.dividendNote().isin(),
+                    DateParser.parseBrokerDateOrNull(row.dividendNote().recordDate()),
+                    row.dividendNote().tax()
+            );
         }
-        return op;
+
+        return new CreateCashOperationCommand(
+                portfolioId,
+                type,
+                row.direction(),
+                date,
+                row.currency(),
+                amount,
+                row.platform(),
+                source,
+                row.noteRaw(),
+                dividend
+        );
     }
 
     private static String contentKey(CashFlowRow r) {

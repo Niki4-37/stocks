@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import ru.redcarpet.stocks.model.dto.CreateCashOperationRequest;
+import ru.redcarpet.stocks.model.dto.CreateCashOperationCommand;
 import ru.redcarpet.stocks.model.service.CashOperationService;
 import ru.redcarpet.stocks.verification.cash.CashVerificationService;
 import ru.redcarpet.stocks.verification.cash.CashCheckRequest;
@@ -24,9 +24,9 @@ public class CashOperationController {
 
     @PostMapping
     public ResponseEntity<String> create(
-            @Valid @RequestBody CreateCashOperationRequest request
+            @Valid @RequestBody CreateCashOperationCommand command
     ) {
-        cashOperationService.create(request);
+        cashOperationService.create(command);
         return ResponseEntity.status(HttpStatus.CREATED).body("Cash operation created!");
     }
 
