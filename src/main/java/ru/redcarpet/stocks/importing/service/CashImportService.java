@@ -1,8 +1,9 @@
-package ru.redcarpet.stocks.importing;
+package ru.redcarpet.stocks.importing.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.redcarpet.stocks.importing.dto.ImportResult;
 import ru.redcarpet.stocks.model.dto.CreateCashOperationCommand;
 import ru.redcarpet.stocks.model.enums.CashOperationType;
 import ru.redcarpet.stocks.model.exception.ValidationException;
@@ -14,6 +15,7 @@ import ru.redcarpet.stocks.verification.trades.TradeSource;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,11 +33,11 @@ public class CashImportService {
      * а в БД уже M — создаём max(0, N-M).
      */
     @Transactional
-    public int importFlows(Long portfolioId,
-                           List<CashFlowRow> rows,
-                           TradeSource source
+    public ImportResult importFlows(Long portfolioId,
+                                    List<CashFlowRow> rows,
+                                    TradeSource source
     ) {
-        if (rows.isEmpty()) return 0;
+        if (rows.isEmpty()) return ImportResult.empty();
 
         // группируем отчётные строки по контентному ключу
         Map<String, List<CashFlowRow>> byKey = rows.stream()
@@ -45,28 +47,52 @@ public class CashImportService {
                         Collectors.toList()));
 
         int inserted = 0;
+        int skipped = 0;
+        List<String> warnings = new ArrayList<>();
 
         for (List<CashFlowRow> sameRows : byKey.values()) {
             CashFlowRow first = sameRows.get(0);
 
-            CashOperationType type = CashOperationType.byDisplayName(first.operation())
-                    .orElseThrow(() -> new ValidationException(
-                            "Unknown operation: " + first.operation()));
+            CashOperationType type;
+            try {
+                type = CashOperationType.byDisplayName(first.operation())
+                        .orElseThrow(() -> new ValidationException(
+                                "Unknown operation: " + first.operation()));
+            } catch (ValidationException e) {
+                warnings.add(e.getMessage());
+                skipped += sameRows.size();
+                continue;
+            }
 
-            LocalDate date = DateParser.parseBrokerDate(first.date());
-            BigDecimal amount = DecimalParser.parse(first.amount());
+            LocalDate date;
+            BigDecimal amount;
+            try {
+                date = DateParser.parseBrokerDate(first.date());
+                amount = DecimalParser.parse(first.amount());
+            } catch (RuntimeException e) {
+                warnings.add("Bad row: " + first + " (" + e.getMessage() + ")");
+                skipped += sameRows.size();
+                continue;
+            }
 
             long existing = cashOperationService.count(
                     portfolioId, source, date, type,
                     first.platform(), first.direction(), amount, first.currency());
 
             long toInsert = sameRows.size() - existing;
+            if (toInsert <= 0) {
+                skipped += sameRows.size();
+                continue;
+            }
+
             for (int i = 0; i < toInsert; i++) {
                 cashOperationService.create(toCommand(portfolioId, first, type, date, amount, source));
                 inserted++;
             }
+            skipped += sameRows.size() - toInsert;   // уже было
         }
-        return inserted;
+
+        return new ImportResult(inserted, skipped, warnings);
     }
 
     private CreateCashOperationCommand toCommand(Long portfolioId, CashFlowRow row,

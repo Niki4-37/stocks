@@ -6,7 +6,7 @@ import org.apache.poi.ss.usermodel.Row;
 import ru.redcarpet.stocks.reports.common.CellReader;
 import ru.redcarpet.stocks.reports.common.HeaderColumnsMatcher;
 import ru.redcarpet.stocks.reports.dto.BondTrade;
-import ru.redcarpet.stocks.reports.dto.SecurityRef;
+import ru.redcarpet.stocks.reports.dto.SecurityIdentityFromReport;
 import ru.redcarpet.stocks.reports.enums.TradeSubsection;
 
 import java.util.ArrayList;
@@ -90,7 +90,7 @@ public final class BondTradeLayout implements TradeLayout<BondTrade> {
     public boolean isValid() { return valid; }
 
     @Override
-    public BondTrade toTrade(Row row, DataFormatter fmt, SecurityRef security) {
+    public BondTrade toTrade(Row row, DataFormatter fmt, SecurityIdentityFromReport security) {
         if (!valid) return null;
 
         String date = CellReader.read(row, dateCol, fmt);

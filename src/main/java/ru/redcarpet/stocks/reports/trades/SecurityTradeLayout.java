@@ -3,7 +3,7 @@ package ru.redcarpet.stocks.reports.trades;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.DataFormatter;
 import org.apache.poi.ss.usermodel.Row;
-import ru.redcarpet.stocks.reports.dto.SecurityRef;
+import ru.redcarpet.stocks.reports.dto.SecurityIdentityFromReport;
 import ru.redcarpet.stocks.reports.common.CellReader;
 import ru.redcarpet.stocks.reports.common.HeaderColumnsMatcher;
 
@@ -22,6 +22,7 @@ public abstract class SecurityTradeLayout<T> implements TradeLayout<T> {
     private static final String CURRENCY = "Валюта";
     private static final String DELIVERY = "Поставка (факт)";
     private static final String PRICE    = "Цена";
+    private static final String PLACE      = "Место сделки";
 
     protected int dateCol = -1;
     protected int numberCol = -1;
@@ -33,6 +34,7 @@ public abstract class SecurityTradeLayout<T> implements TradeLayout<T> {
     protected int deliveryCol = -1;
     protected int buyPriceCol = -1;
     protected int sellPriceCol = -1;
+    private int placeCol = -1;
     protected boolean valid;
 
     @Override
@@ -49,6 +51,7 @@ public abstract class SecurityTradeLayout<T> implements TradeLayout<T> {
         this.proceedsCol  = HeaderColumnsMatcher.findExact(row, fmt, PROCEEDS);
         this.currencyCol  = HeaderColumnsMatcher.findExact(row, fmt, CURRENCY);
         this.deliveryCol  = HeaderColumnsMatcher.findExact(row, fmt, DELIVERY);
+        this.placeCol     = HeaderColumnsMatcher.findExact(row, fmt, PLACE);
 
         List<Integer> priceCols = findAll(row, fmt, PRICE);
         this.buyPriceCol  = priceCols.size() >= 1 ? priceCols.get(0) : -1;
@@ -62,7 +65,7 @@ public abstract class SecurityTradeLayout<T> implements TradeLayout<T> {
     public void invalidate() {
         dateCol = numberCol = boughtQtyCol = soldQtyCol = -1;
         paymentCol = proceedsCol = currencyCol = deliveryCol = -1;
-        buyPriceCol = sellPriceCol = -1;
+        buyPriceCol = sellPriceCol = placeCol = -1;
         valid = false;
     }
 
@@ -70,7 +73,7 @@ public abstract class SecurityTradeLayout<T> implements TradeLayout<T> {
     public boolean isValid() { return valid; }
 
     @Override
-    public T toTrade(Row row, DataFormatter fmt, SecurityRef security) {
+    public T toTrade(Row row, DataFormatter fmt, SecurityIdentityFromReport security) {
         if (!valid) return null;
 
         String date = CellReader.read(row, dateCol, fmt);
@@ -90,16 +93,17 @@ public abstract class SecurityTradeLayout<T> implements TradeLayout<T> {
                 CellReader.read(row, sellPriceCol, fmt),
                 CellReader.read(row, proceedsCol, fmt),
                 CellReader.read(row, currencyCol, fmt),
-                CellReader.read(row, deliveryCol, fmt)
+                CellReader.read(row, deliveryCol, fmt),
+                CellReader.read(row, placeCol, fmt)
         );
     }
 
     /** Собирает конкретный DTO из уже прочитанных значений. */
-    protected abstract T build(SecurityRef security,
+    protected abstract T build(SecurityIdentityFromReport security,
                                String date, String number,
                                String boughtQty, String buyPrice, String paymentAmount,
                                String soldQty, String sellPrice, String proceeds,
-                               String currency, String deliveryFact);
+                               String currency, String deliveryFact, String place);
 
     private static List<Integer> findAll(Row row, DataFormatter fmt, String name) {
         List<Integer> result = new ArrayList<>();

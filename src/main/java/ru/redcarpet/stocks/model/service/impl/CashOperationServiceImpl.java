@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.redcarpet.stocks.model.dto.CreateCashOperationRequest;
 import ru.redcarpet.stocks.model.dto.CreateCashOperationCommand;
 import ru.redcarpet.stocks.model.entity.CashOperation;
 import ru.redcarpet.stocks.model.entity.Portfolio;

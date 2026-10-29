@@ -2,7 +2,7 @@ package ru.redcarpet.stocks.reports.trades;
 
 import org.apache.poi.ss.usermodel.DataFormatter;
 import org.apache.poi.ss.usermodel.Row;
-import ru.redcarpet.stocks.reports.dto.SecurityRef;
+import ru.redcarpet.stocks.reports.dto.SecurityIdentityFromReport;
 import ru.redcarpet.stocks.reports.enums.TradeSubsection;
 
 /**
@@ -24,5 +24,5 @@ public interface TradeLayout<T> {
     void invalidate();
 
     /** Собирает DTO, если строка похожа на сделку; иначе null. */
-    T toTrade(Row row, DataFormatter fmt, SecurityRef security);
+    T toTrade(Row row, DataFormatter fmt, SecurityIdentityFromReport security);
 }

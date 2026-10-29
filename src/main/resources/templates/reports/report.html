@@ -346,13 +346,32 @@
         </tbody>
     </table>
 
-    <form th:if="${cashVerification.summary().missing() > 0}"
-          th:action="@{/ui/reports/upload/import-cash}"
-          method="post" enctype="multipart/form-data">
+    <form th:if="${cashVerification != null and cashVerification.summary().missing() > 0}"
+          th:action="@{/ui/reports/upload/import}"
+          method="post">
         <input type="hidden" name="portfolioId" th:value="${portfolioId}">
-        <input type="file" name="file" accept=".xls,.xlsx" required>
         <button type="submit">Импортировать отсутствующие</button>
     </form>
+</div>
+
+<div class="section" th:if="${importResult != null}">
+    <p class="meta">
+        Импортировано:
+        движение средств — <b th:text="${importResult.cashInserted()}"></b>
+        (пропущено <b th:text="${importResult.cashSkipped()}"></b>),
+        сделок — <b th:text="${importResult.tradesInserted()}"></b>
+        (пропущено <b th:text="${importResult.tradesSkipped()}"></b>).
+    </p>
+    <div th:if="${not #lists.isEmpty(importResult.warnings())}">
+        <p class="empty">Предупреждения:</p>
+        <ul>
+            <li th:each="w : ${importResult.warnings()}" th:text="${w}"></li>
+        </ul>
+    </div>
+</div>
+
+<div class="section" th:if="${error != null}">
+    <p class="fail" th:text="${error}"></p>
 </div>
 
 </body>

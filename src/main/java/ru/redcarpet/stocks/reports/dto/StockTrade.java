@@ -16,5 +16,6 @@ public record StockTrade(
         String sellPrice,     // вторая «Цена»
         String proceeds,      // Сумма выручки
         String currency,      // Валюта
-        String deliveryFact   // Поставка (факт)
+        String deliveryFact,   // Поставка (факт)
+        String place
 ) {}

@@ -26,10 +26,17 @@ public interface EventRepository extends JpaRepository<Event, Long> {
             @Param("source") TradeSource source,
             @Param("tradeNumbers") Collection<String> tradeNumbers);
 
-    boolean existsByPortfolioIdAndTradeSourceAndTradeNumberAndTradeDateAndTradeIsin(
-            Long portfolioId,
-            TradeSource source,
-            String tradeNumber,
-            LocalDate tradeDate,
-            String tradeIsin);
+    @Query("""
+        select count(e) > 0 from Event e
+         where e.portfolio.id = :portfolioId
+           and e.tradeSource = :source
+           and e.tradeNumber = :number
+           and e.tradeDate = :date
+           and e.tradeIsin = :isin
+        """)
+    boolean existsByTradeKey(@Param("portfolioId") Long portfolioId,
+                             @Param("source") TradeSource source,
+                             @Param("number") String number,
+                             @Param("date") LocalDate date,
+                             @Param("isin") String isin);
 }

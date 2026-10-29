@@ -4,7 +4,7 @@ import org.apache.logging.log4j.util.Strings;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.DataFormatter;
 import org.apache.poi.ss.usermodel.Row;
-import ru.redcarpet.stocks.reports.dto.SecurityRef;
+import ru.redcarpet.stocks.reports.dto.SecurityIdentityFromReport;
 
 import java.util.Objects;
 
@@ -16,8 +16,8 @@ public final class CurrencyRefParser {
 
     private CurrencyRefParser() {}
 
-    /** @return SecurityRef(ticker=инструмент, name=валюта лота) или null, если не идентификатор. */
-    public static SecurityRef tryParse(Row row, DataFormatter fmt) {
+    /** @return SecurityIdentityFromReport(ticker=инструмент, name=валюта лота) или null, если не идентификатор. */
+    public static SecurityIdentityFromReport tryParse(Row row, DataFormatter fmt) {
         if (Objects.isNull(row)) return null;
 
         String instrument = firstNonBlank(row, fmt);
@@ -29,7 +29,7 @@ public final class CurrencyRefParser {
 
         // ticker = "EURRUB_TOM", name = "EUR/RUB" (лот/сопряж.)
         String name = (lot.isBlank() ? "?" : lot) + "/" + (counter.isBlank() ? "?" : counter);
-        return new SecurityRef(instrument, "no ISIN", "no name");
+        return new SecurityIdentityFromReport(instrument, "no ISIN", "no name");
     }
 
     private static String firstNonBlank(Row row, DataFormatter fmt) {

@@ -4,7 +4,7 @@ import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.DataFormatter;
 import org.apache.poi.ss.usermodel.Row;
 import ru.redcarpet.stocks.reports.dto.CurrencyTrade;
-import ru.redcarpet.stocks.reports.dto.SecurityRef;
+import ru.redcarpet.stocks.reports.dto.SecurityIdentityFromReport;
 import ru.redcarpet.stocks.reports.enums.TradeSubsection;
 import ru.redcarpet.stocks.reports.common.CellReader;
 import ru.redcarpet.stocks.reports.common.HeaderColumnsMatcher;
@@ -20,6 +20,7 @@ public final class CurrencyTradeLayout implements TradeLayout<CurrencyTrade> {
     private static final String SELL_RATE   = "Курс сделки (продажа)";
     private static final String LOT_VOLUME  = "Объём в валюте лота";
     private static final String CNT_VOLUME  = "Объём в сопряж. валюте";
+    private static final String PLACE      = "Место сделки";
 
     private int dateCol = -1;
     private int numberCol = -1;
@@ -29,6 +30,7 @@ public final class CurrencyTradeLayout implements TradeLayout<CurrencyTrade> {
     private int sellLotCol = -1;
     private int buyCounterCol = -1;
     private int sellCounterCol = -1;
+    private int placeCol = -1;
     private boolean valid;
 
     @Override
@@ -70,7 +72,7 @@ public final class CurrencyTradeLayout implements TradeLayout<CurrencyTrade> {
     public boolean isValid() { return valid; }
 
     @Override
-    public CurrencyTrade toTrade(Row row, DataFormatter fmt, SecurityRef security) {
+    public CurrencyTrade toTrade(Row row, DataFormatter fmt, SecurityIdentityFromReport security) {
         if (!valid) return null;
 
         String date = CellReader.read(row, dateCol, fmt);

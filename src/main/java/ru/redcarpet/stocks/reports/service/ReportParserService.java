@@ -50,8 +50,7 @@ public class ReportParserService {
             TradesResult trades = tradesParser.parse(sections.trades(), fmt);
             List<CheckRow> checks = checksBuilder.build(cashFlows.expenses(), totals);
 
-            return new ParseResult(cashFlows, trades.stocks(), trades.funds(),
-                    trades.bonds(), trades.currencies(), checks);
+            return new ParseResult(cashFlows, trades, checks);
         }
     }
 }

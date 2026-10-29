@@ -1,5 +1,7 @@
 package ru.redcarpet.stocks.model.enums;
 
+import ru.redcarpet.stocks.model.exception.ValidationException;
+
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -45,6 +47,11 @@ public enum CashOperationType {
         return Arrays.stream(values())
                 .filter(op -> op.displayName.equalsIgnoreCase(t))
                 .findFirst();
+    }
+
+    public static CashOperationType requireByDisplayName(String title) {
+        return byDisplayName(title).orElseThrow(() -> new ValidationException(
+                "Unknown operation: " + title));
     }
 
     public static boolean isExpense(String title) {

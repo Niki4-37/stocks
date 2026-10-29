@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component;
 import ru.redcarpet.stocks.reports.dto.BondTrade;
 import ru.redcarpet.stocks.reports.dto.CurrencyTrade;
 import ru.redcarpet.stocks.reports.dto.FundTrade;
-import ru.redcarpet.stocks.reports.dto.SecurityRef;
+import ru.redcarpet.stocks.reports.dto.SecurityIdentityFromReport;
 import ru.redcarpet.stocks.reports.dto.StockTrade;
 import ru.redcarpet.stocks.reports.dto.TradesResult;
 import ru.redcarpet.stocks.reports.enums.TradeSubsection;
@@ -26,7 +26,7 @@ public final class TradesParser {
         List<CurrencyTrade> currencies = new ArrayList<>();
 
         TradeLayout<?> layout = null;
-        SecurityRef current = SecurityRef.EMPTY;
+        SecurityIdentityFromReport current = SecurityIdentityFromReport.EMPTY;
         TradeSubsectionClassifier subsectionClassifier = new TradeSubsectionClassifier();
 
         for (Row row : rows) {
@@ -34,11 +34,11 @@ public final class TradesParser {
 
             if (Objects.isNull(layout) || !layout.isSupports(sub)) {
                 layout = TradeLayoutFactory.create(sub);
-                current = SecurityRef.EMPTY;
+                current = SecurityIdentityFromReport.EMPTY;
                 if (Objects.isNull(layout)) continue;
             }
 
-            SecurityRef parsed = SecurityRefParser.tryParse(row, fmt);
+            SecurityIdentityFromReport parsed = SecurityIdentityParser.tryParse(row, fmt);
             if (Objects.nonNull(parsed)) {
                 current = parsed;
                 continue;

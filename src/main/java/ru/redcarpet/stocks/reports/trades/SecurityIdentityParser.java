@@ -4,22 +4,22 @@ import org.apache.logging.log4j.util.Strings;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.DataFormatter;
 import org.apache.poi.ss.usermodel.Row;
-import ru.redcarpet.stocks.reports.dto.SecurityRef;
+import ru.redcarpet.stocks.reports.dto.SecurityIdentityFromReport;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.regex.Pattern;
 
-/** Извлекает SecurityRef из строки-идентификатора бумаги в разделе 2.1. */
-public final class SecurityRefParser {
+/** Извлекает SecurityIdentityFromReport из строки-идентификатора бумаги в разделе 2.1. */
+public final class SecurityIdentityParser {
 
     private static final Pattern ISIN_PATTERN =
             Pattern.compile("^[A-Z]{2}[A-Z0-9]{9}[0-9]$");
 
-    private SecurityRefParser() {}
+    private SecurityIdentityParser() {}
 
-    public static SecurityRef tryParse(Row row, DataFormatter fmt) {
+    public static SecurityIdentityFromReport tryParse(Row row, DataFormatter fmt) {
         if (Objects.isNull(row)) return null;
 
         String ticker = firstNonBlank(row, fmt);
@@ -38,7 +38,7 @@ public final class SecurityRefParser {
         // Если ISIN нет — названия нет (по требованию: только после ISIN).
         String name = isinIdx >= 0 ? nextNonBlank(cells, isinIdx + 1) : "";
 
-        return new SecurityRef(ticker, isin, name);
+        return new SecurityIdentityFromReport(ticker, isin, name);
     }
 
     private static List<String> readCells(Row row, DataFormatter fmt) {
@@ -70,22 +70,6 @@ public final class SecurityRefParser {
         for (Cell c : row) {
             String v = fmt.formatCellValue(c).trim();
             if (!v.isEmpty()) return v;
-        }
-        return Strings.EMPTY;
-    }
-
-    /** Первая непустая ячейка после метки, но не другая метка. */
-    private static String valueAfterLabel(Row row, DataFormatter fmt, String label) {
-        boolean found = false;
-        for (Cell c : row) {
-            String v = fmt.formatCellValue(c).trim();
-            if (!found) {
-                if (v.equalsIgnoreCase(label)) found = true;
-                continue;
-            }
-            if (v.isEmpty()) continue;
-            if (v.equalsIgnoreCase(label)) return Strings.EMPTY;
-            return v;
         }
         return Strings.EMPTY;
     }

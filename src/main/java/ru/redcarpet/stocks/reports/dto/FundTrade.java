@@ -14,5 +14,6 @@ public record FundTrade(
         String sellPrice,
         String proceeds,
         String currency,
-        String deliveryFact
+        String deliveryFact,
+        String place
 ) {}
