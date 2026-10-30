@@ -9,12 +9,12 @@ import ru.redcarpet.stocks.reports.dto.SecurityIdentityFromReport;
 import java.util.Objects;
 
 /** Распознаёт строку-идентификатор валютной подтаблицы: EURRUB_TOM | Валюта лота: | EUR | Сопряж. валюта: | Рубль. */
-public final class CurrencyRefParser {
+public final class CurrencyIdentityParser {
 
     private static final String LOT_LABEL     = "Валюта лота:";
     private static final String COUNTER_LABEL = "Сопряж. валюта:";
 
-    private CurrencyRefParser() {}
+    private CurrencyIdentityParser() {}
 
     /** @return SecurityIdentityFromReport(ticker=инструмент, name=валюта лота) или null, если не идентификатор. */
     public static SecurityIdentityFromReport tryParse(Row row, DataFormatter fmt) {
@@ -29,7 +29,7 @@ public final class CurrencyRefParser {
 
         // ticker = "EURRUB_TOM", name = "EUR/RUB" (лот/сопряж.)
         String name = (lot.isBlank() ? "?" : lot) + "/" + (counter.isBlank() ? "?" : counter);
-        return new SecurityIdentityFromReport(instrument, "no ISIN", "no name");
+        return new SecurityIdentityFromReport(instrument, "", name);
     }
 
     private static String firstNonBlank(Row row, DataFormatter fmt) {

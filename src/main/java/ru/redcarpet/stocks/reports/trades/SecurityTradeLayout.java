@@ -1,14 +1,14 @@
 package ru.redcarpet.stocks.reports.trades;
 
-import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.DataFormatter;
 import org.apache.poi.ss.usermodel.Row;
 import ru.redcarpet.stocks.reports.dto.SecurityIdentityFromReport;
 import ru.redcarpet.stocks.reports.common.CellReader;
 import ru.redcarpet.stocks.reports.common.HeaderColumnsMatcher;
 
-import java.util.ArrayList;
 import java.util.List;
+
+import static ru.redcarpet.stocks.reports.common.HeaderColumnsMatcher.findAllIndexesStartsWith;
 
 /** Общая шапка для бумажных подразделов: Акция, Пай. */
 public abstract class SecurityTradeLayout<T> implements TradeLayout<T> {
@@ -39,21 +39,21 @@ public abstract class SecurityTradeLayout<T> implements TradeLayout<T> {
 
     @Override
     public boolean tryUpdate(Row row, DataFormatter fmt) {
-        int cBought = HeaderColumnsMatcher.findExact(row, fmt, BOUGHT);
-        int cSold   = HeaderColumnsMatcher.findExact(row, fmt, SOLD);
+        int cBought = HeaderColumnsMatcher.findIndexExact(row, fmt, BOUGHT);
+        int cSold   = HeaderColumnsMatcher.findIndexExact(row, fmt, SOLD);
         if (cBought < 0 && cSold < 0) return false;
 
         this.boughtQtyCol = cBought;
         this.soldQtyCol   = cSold;
-        this.dateCol      = HeaderColumnsMatcher.findExact(row, fmt, DATE);
-        this.numberCol    = HeaderColumnsMatcher.findExact(row, fmt, NUMBER);
-        this.paymentCol   = HeaderColumnsMatcher.findExact(row, fmt, PAYMENT);
-        this.proceedsCol  = HeaderColumnsMatcher.findExact(row, fmt, PROCEEDS);
-        this.currencyCol  = HeaderColumnsMatcher.findExact(row, fmt, CURRENCY);
-        this.deliveryCol  = HeaderColumnsMatcher.findExact(row, fmt, DELIVERY);
-        this.placeCol     = HeaderColumnsMatcher.findExact(row, fmt, PLACE);
+        this.dateCol      = HeaderColumnsMatcher.findIndexExact(row, fmt, DATE);
+        this.numberCol    = HeaderColumnsMatcher.findIndexExact(row, fmt, NUMBER);
+        this.paymentCol   = HeaderColumnsMatcher.findIndexExact(row, fmt, PAYMENT);
+        this.proceedsCol  = HeaderColumnsMatcher.findIndexExact(row, fmt, PROCEEDS);
+        this.currencyCol  = HeaderColumnsMatcher.findIndexExact(row, fmt, CURRENCY);
+        this.deliveryCol  = HeaderColumnsMatcher.findIndexExact(row, fmt, DELIVERY);
+        this.placeCol     = HeaderColumnsMatcher.findIndexExact(row, fmt, PLACE);
 
-        List<Integer> priceCols = findAll(row, fmt, PRICE);
+        List<Integer> priceCols = findAllIndexesStartsWith(row, fmt, PRICE);
         this.buyPriceCol  = priceCols.size() >= 1 ? priceCols.get(0) : -1;
         this.sellPriceCol = priceCols.size() >= 2 ? priceCols.get(1) : -1;
 
@@ -105,13 +105,4 @@ public abstract class SecurityTradeLayout<T> implements TradeLayout<T> {
                                String soldQty, String sellPrice, String proceeds,
                                String currency, String deliveryFact, String place);
 
-    private static List<Integer> findAll(Row row, DataFormatter fmt, String name) {
-        List<Integer> result = new ArrayList<>();
-        for (Cell c : row) {
-            if (fmt.formatCellValue(c).trim().equalsIgnoreCase(name)) {
-                result.add(c.getColumnIndex());
-            }
-        }
-        return result;
-    }
 }

@@ -38,7 +38,10 @@ public final class TradesParser {
                 if (Objects.isNull(layout)) continue;
             }
 
-            SecurityIdentityFromReport parsed = SecurityIdentityParser.tryParse(row, fmt);
+            SecurityIdentityFromReport parsed = switch (sub) {
+                case CURRENCY -> CurrencyIdentityParser.tryParse(row, fmt);
+                default       -> SecurityIdentityParser.tryParse(row, fmt);
+            };
             if (Objects.nonNull(parsed)) {
                 current = parsed;
                 continue;

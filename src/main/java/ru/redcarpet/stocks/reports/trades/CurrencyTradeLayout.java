@@ -1,6 +1,5 @@
 package ru.redcarpet.stocks.reports.trades;
 
-import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.DataFormatter;
 import org.apache.poi.ss.usermodel.Row;
 import ru.redcarpet.stocks.reports.dto.CurrencyTrade;
@@ -9,8 +8,9 @@ import ru.redcarpet.stocks.reports.enums.TradeSubsection;
 import ru.redcarpet.stocks.reports.common.CellReader;
 import ru.redcarpet.stocks.reports.common.HeaderColumnsMatcher;
 
-import java.util.ArrayList;
 import java.util.List;
+
+import static ru.redcarpet.stocks.reports.common.HeaderColumnsMatcher.findAllIndexesStartsWith;
 
 public final class CurrencyTradeLayout implements TradeLayout<CurrencyTrade> {
 
@@ -40,17 +40,17 @@ public final class CurrencyTradeLayout implements TradeLayout<CurrencyTrade> {
 
     @Override
     public boolean tryUpdate(Row row, DataFormatter fmt) {
-        int cBuyRate  = HeaderColumnsMatcher.findExact(row, fmt, BUY_RATE);
-        int cSellRate = HeaderColumnsMatcher.findExact(row, fmt, SELL_RATE);
+        int cBuyRate  = HeaderColumnsMatcher.findIndexExact(row, fmt, BUY_RATE);
+        int cSellRate = HeaderColumnsMatcher.findIndexExact(row, fmt, SELL_RATE);
         if (cBuyRate < 0 && cSellRate < 0) return false;
 
         this.buyRateCol  = cBuyRate;
         this.sellRateCol = cSellRate;
-        this.dateCol     = HeaderColumnsMatcher.findExact(row, fmt, DATE);
-        this.numberCol   = HeaderColumnsMatcher.findExact(row, fmt, NUMBER);
+        this.dateCol     = HeaderColumnsMatcher.findIndexExact(row, fmt, DATE);
+        this.numberCol   = HeaderColumnsMatcher.findIndexExact(row, fmt, NUMBER);
 
-        List<Integer> lots     = findAll(row, fmt, LOT_VOLUME);
-        List<Integer> counters = findAll(row, fmt, CNT_VOLUME);
+        List<Integer> lots     = findAllIndexesStartsWith(row, fmt, LOT_VOLUME);
+        List<Integer> counters = findAllIndexesStartsWith(row, fmt, CNT_VOLUME);
 
         this.buyLotCol      = lots.size()     >= 1 ? lots.get(0)     : -1;
         this.sellLotCol     = lots.size()     >= 2 ? lots.get(1)     : -1;
@@ -83,7 +83,7 @@ public final class CurrencyTradeLayout implements TradeLayout<CurrencyTrade> {
 
         return new CurrencyTrade(
                 security.ticker(),          // instrument (EURRUB_TOM)
-                security.name(),            // lotCurrency (EUR) — см. CurrencyRefParser
+                security.name(),            // lotCurrency (EUR) — см. CurrencyIdentityParser
                 "",                         // counterCurrency (Рубль) — заполним ниже, если нужно
                 date,
                 number,
@@ -94,15 +94,5 @@ public final class CurrencyTradeLayout implements TradeLayout<CurrencyTrade> {
                 CellReader.read(row, sellLotCol, fmt),
                 CellReader.read(row, sellCounterCol, fmt)
         );
-    }
-
-    private static List<Integer> findAll(Row row, DataFormatter fmt, String name) {
-        List<Integer> result = new ArrayList<>();
-        for (Cell c : row) {
-            if (fmt.formatCellValue(c).trim().equalsIgnoreCase(name)) {
-                result.add(c.getColumnIndex());
-            }
-        }
-        return result;
     }
 }

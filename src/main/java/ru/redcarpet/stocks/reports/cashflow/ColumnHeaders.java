@@ -4,7 +4,7 @@ import org.apache.poi.ss.usermodel.DataFormatter;
 import org.apache.poi.ss.usermodel.Row;
 import ru.redcarpet.stocks.reports.common.CellReader;
 
-import static ru.redcarpet.stocks.reports.common.HeaderColumnsMatcher.findFirst;
+import static ru.redcarpet.stocks.reports.common.HeaderColumnsMatcher.findFirstIndexExact;
 
 /**
  * Индексы столбцов текущей таблицы отчёта БКС.
@@ -22,27 +22,27 @@ public final class ColumnHeaders {
 
     /** Шапка 1.1: нужны «Сумма зачисления» ИЛИ «Сумма списания» + «Площадка» + «Операция». */
     public boolean tryUpdateCashFlow(Row row, DataFormatter fmt) {
-        int cOp     = findFirst(row, fmt, ColumnNames.OPERATION);
-        int cPlat   = findFirst(row, fmt, ColumnNames.PLATFORM);
-        int cIncome = findFirst(row, fmt, ColumnNames.INCOME);
-        int cExpense= findFirst(row, fmt, ColumnNames.EXPENSE);
+        int cOp     = findFirstIndexExact(row, fmt, ColumnNames.OPERATION);
+        int cPlat   = findFirstIndexExact(row, fmt, ColumnNames.PLATFORM);
+        int cIncome = findFirstIndexExact(row, fmt, ColumnNames.INCOME);
+        int cExpense= findFirstIndexExact(row, fmt, ColumnNames.EXPENSE);
         if (cOp < 0 || cPlat < 0 || (cIncome < 0 && cExpense < 0)) return false;
 
-        this.dateCol      = findFirst(row, fmt, ColumnNames.DATE);
+        this.dateCol      = findFirstIndexExact(row, fmt, ColumnNames.DATE);
         this.operationCol = cOp;
         this.incomeCol    = cIncome;
         this.expenseCol   = cExpense;
         this.platformCol  = cPlat;
-        this.noteCol      = findFirst(row, fmt, ColumnNames.NOTE);
+        this.noteCol      = findFirstIndexExact(row, fmt, ColumnNames.NOTE);
         this.valid        = true;
         return true;
     }
 
     /** Шапка 1.3: «Сумма списания» ИЛИ «Начисленная комиссия» + «Площадка» + «Операция/Вид сбора». */
     public boolean tryUpdateFees(Row row, DataFormatter fmt) {
-        int cOp =       findFirst(row, fmt, ColumnNames.OPERATION);
-        int cExpense =  findFirst(row, fmt, ColumnNames.EXPENSE);
-        int cPlat =     findFirst(row, fmt, ColumnNames.PLATFORM);
+        int cOp =       findFirstIndexExact(row, fmt, ColumnNames.OPERATION);
+        int cExpense =  findFirstIndexExact(row, fmt, ColumnNames.EXPENSE);
+        int cPlat =     findFirstIndexExact(row, fmt, ColumnNames.PLATFORM);
         if (cOp < 0 || cExpense < 0 || cPlat < 0) return false;
 
         this.operationCol = cOp;
