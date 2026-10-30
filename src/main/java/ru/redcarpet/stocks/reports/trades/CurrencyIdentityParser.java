@@ -4,6 +4,7 @@ import org.apache.logging.log4j.util.Strings;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.DataFormatter;
 import org.apache.poi.ss.usermodel.Row;
+import ru.redcarpet.stocks.reports.common.RowValues;
 import ru.redcarpet.stocks.reports.dto.SecurityIdentityFromReport;
 
 import java.util.Objects;
@@ -23,8 +24,8 @@ public final class CurrencyIdentityParser {
         String instrument = firstNonBlank(row, fmt);
         if (instrument.isBlank()) return null;
 
-        String lot = valueAfterLabel(row, fmt, LOT_LABEL);
-        String counter = valueAfterLabel(row, fmt, COUNTER_LABEL);
+        String lot = RowValues.valueAfterLabel(row, fmt, LOT_LABEL);
+        String counter = RowValues.valueAfterLabel(row, fmt, COUNTER_LABEL);
         if (lot.isBlank() && counter.isBlank()) return null;
 
         // ticker = "EURRUB_TOM", name = "EUR/RUB" (лот/сопряж.)

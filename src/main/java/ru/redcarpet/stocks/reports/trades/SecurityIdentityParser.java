@@ -4,6 +4,8 @@ import org.apache.logging.log4j.util.Strings;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.DataFormatter;
 import org.apache.poi.ss.usermodel.Row;
+import ru.redcarpet.stocks.reports.common.CellReader;
+import ru.redcarpet.stocks.reports.common.RowValues;
 import ru.redcarpet.stocks.reports.dto.SecurityIdentityFromReport;
 
 import java.util.ArrayList;
@@ -22,31 +24,19 @@ public final class SecurityIdentityParser {
     public static SecurityIdentityFromReport tryParse(Row row, DataFormatter fmt) {
         if (Objects.isNull(row)) return null;
 
-        String ticker = firstNonBlank(row, fmt);
+        String ticker = RowValues.firstNonBlank(row, fmt);
         if (ticker.isBlank()) return null;
 
-        List<String> cells = readCells(row, fmt);
+        List<String> cells = CellReader.readAll(row, fmt);
 
         // индекс последней ячейки, похожей на ISIN
         int isinIdx = lastIsinIndex(cells);
-        String isin = isinIdx >= 0 ? cells.get(isinIdx) : Strings.EMPTY;
+        if (isinIdx < 0) return null;
 
-        // должно быть хоть что-то: ISIN
-        if (isin.isBlank()) return null;
-
-        // Название — первая непустая ячейка ПОСЛЕ значения ISIN.
-        // Если ISIN нет — названия нет (по требованию: только после ISIN).
-        String name = isinIdx >= 0 ? nextNonBlank(cells, isinIdx + 1) : "";
+        String isin = cells.get(isinIdx);
+        String name = RowValues.nextNonBlank(cells, isinIdx + 1);
 
         return new SecurityIdentityFromReport(ticker, isin, name);
-    }
-
-    private static List<String> readCells(Row row, DataFormatter fmt) {
-        List<String> result = new ArrayList<>();
-        for (Cell c : row) {
-            result.add(fmt.formatCellValue(c).trim());
-        }
-        return result;
     }
 
     /** Индекс последней ячейки, значение которой похоже на ISIN; -1, если нет. */
@@ -55,22 +45,5 @@ public final class SecurityIdentityParser {
             if (ISIN_PATTERN.matcher(cells.get(i)).matches()) return i;
         }
         return -1;
-    }
-
-    /** Первая непустая ячейка начиная с позиции {@code from}. */
-    private static String nextNonBlank(List<String> cells, int from) {
-        for (int i = from; i < cells.size(); i++) {
-            String v = cells.get(i);
-            if (!v.isEmpty()) return v;
-        }
-        return Strings.EMPTY;
-    }
-
-    private static String firstNonBlank(Row row, DataFormatter fmt) {
-        for (Cell c : row) {
-            String v = fmt.formatCellValue(c).trim();
-            if (!v.isEmpty()) return v;
-        }
-        return Strings.EMPTY;
     }
 }
