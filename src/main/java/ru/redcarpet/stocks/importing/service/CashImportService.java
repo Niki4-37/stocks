@@ -1,6 +1,7 @@
 package ru.redcarpet.stocks.importing.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.redcarpet.stocks.importing.dto.ImportResult;
@@ -9,11 +10,9 @@ import ru.redcarpet.stocks.model.enums.CashOperationType;
 import ru.redcarpet.stocks.model.exception.ValidationException;
 import ru.redcarpet.stocks.model.service.CashOperationService;
 import ru.redcarpet.stocks.reports.common.DateParser;
-import ru.redcarpet.stocks.reports.common.DecimalParser;
 import ru.redcarpet.stocks.reports.dto.CashFlowRow;
 import ru.redcarpet.stocks.verification.trades.TradeSource;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -21,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class CashImportService {
@@ -55,9 +55,7 @@ public class CashImportService {
 
             CashOperationType type;
             try {
-                type = CashOperationType.byDisplayName(first.operation())
-                        .orElseThrow(() -> new ValidationException(
-                                "Unknown operation: " + first.operation()));
+                type = CashOperationType.requireByDisplayName(first.operation());
             } catch (ValidationException e) {
                 warnings.add(e.getMessage());
                 skipped += sameRows.size();
@@ -65,10 +63,8 @@ public class CashImportService {
             }
 
             LocalDate date;
-            BigDecimal amount;
             try {
                 date = DateParser.parseBrokerDate(first.date());
-                amount = DecimalParser.parse(first.amount());
             } catch (RuntimeException e) {
                 warnings.add("Bad row: " + first + " (" + e.getMessage() + ")");
                 skipped += sameRows.size();
@@ -77,7 +73,7 @@ public class CashImportService {
 
             long existing = cashOperationService.count(
                     portfolioId, source, date, type,
-                    first.platform(), first.direction(), amount, first.currency());
+                    first.platform(), first.direction(), first.amount(), first.currency());
 
             long toInsert = sameRows.size() - existing;
             if (toInsert <= 0) {
@@ -86,10 +82,12 @@ public class CashImportService {
             }
 
             for (int i = 0; i < toInsert; i++) {
-                cashOperationService.create(toCommand(portfolioId, first, type, date, amount, source));
+                log.info("Importing cash operation: operation={}, date={}, direction={}, amount={}",
+                        first.operation(), first.date(), first.direction(), first.amount());
+                cashOperationService.create(toCommand(portfolioId, first, type, date, source));
                 inserted++;
             }
-            skipped += sameRows.size() - toInsert;   // уже было
+            skipped += sameRows.size() - toInsert;
         }
 
         return new ImportResult(inserted, skipped, warnings);
@@ -97,7 +95,7 @@ public class CashImportService {
 
     private CreateCashOperationCommand toCommand(Long portfolioId, CashFlowRow row,
                                                  CashOperationType type, LocalDate date,
-                                                 BigDecimal amount, TradeSource source) {
+                                                 TradeSource source) {
         CreateCashOperationCommand.DividendFields dividend = null;
         if (type.isDividend() && row.dividendNote() != null) {
             dividend = new CreateCashOperationCommand.DividendFields(
@@ -114,7 +112,7 @@ public class CashImportService {
                 row.direction(),
                 date,
                 row.currency(),
-                amount,
+                row.amount(),
                 row.platform(),
                 source,
                 row.noteRaw(),

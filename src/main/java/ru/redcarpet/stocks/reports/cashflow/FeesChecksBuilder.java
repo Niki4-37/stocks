@@ -3,7 +3,6 @@ package ru.redcarpet.stocks.reports.cashflow;
 import org.springframework.stereotype.Component;
 import ru.redcarpet.stocks.model.enums.CashFlowDirection;
 import ru.redcarpet.stocks.model.enums.CashOperationType;
-import ru.redcarpet.stocks.reports.common.DecimalParser;
 import ru.redcarpet.stocks.reports.dto.CheckRow;
 import ru.redcarpet.stocks.reports.dto.CashFlowRow;
 
@@ -12,7 +11,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 /** Сверка детальных операций 1.1 с итогами 1.3. */
 @Component
@@ -26,14 +24,11 @@ public final class FeesChecksBuilder {
 
         for (CashFlowRow cashFlowRow : operations) {
             if (cashFlowRow.direction() != CashFlowDirection.EXPENSE) continue;
-            if (!CashOperationType.isExpense(cashFlowRow.operation())) continue;
-
-            BigDecimal parsedAmount = DecimalParser.parse(cashFlowRow.amount());
-            if (Objects.isNull(parsedAmount)) continue;
+            if (!CashOperationType.isChecking(cashFlowRow.operation())) continue;
 
             detailSums.merge(
                     key(cashFlowRow.operation(), cashFlowRow.platform()),
-                    parsedAmount,
+                    cashFlowRow.amount(),
                     BigDecimal::add);
         }
 

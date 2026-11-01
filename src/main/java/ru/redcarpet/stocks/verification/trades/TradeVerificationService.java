@@ -17,7 +17,7 @@ public class TradeVerificationService {
 
     private final EventRepository eventRepository;
 
-    public CheckTradesResponse check(CheckTradesRequest request) {
+    public TradesCheckResponse check(TradesCheckRequest request) {
         List<String> numbers = request.trades().stream()
                 .map(TradeKeyDto::tradeNumber)
                 .distinct()
@@ -72,7 +72,7 @@ public class TradeVerificationService {
             }
         }
 
-        return new CheckTradesResponse(
+        return new TradesCheckResponse(
                 request.portfolioId(), results,
                 new Summary(results.size(), matched, missing, conflict));
     }

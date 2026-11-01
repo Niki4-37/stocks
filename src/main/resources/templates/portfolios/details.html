@@ -114,36 +114,62 @@
     </p>
 </div>
 
+<!-- ================= Итого по портфелю ================= -->
 <div class="section">
     <h2>Итого по портфелю</h2>
+
     <table>
+        <thead>
+        <tr>
+            <th>Показатель</th>
+            <th class="num" th:each="c : ${portfolio.cashByCurrency.keySet()}"
+                th:text="${c}"></th>
+        </tr>
+        </thead>
         <tbody>
         <tr>
-            <td>Денежные средства (<span th:text="${portfolio.baseCurrency}">RUB</span>)</td>
-            <td class="num" th:text="${#numbers.formatDecimal(portfolio.totalCashValue, 1, 2)}">722400.00</td>
+            <td>Денежные средства</td>
+            <td class="num" th:each="c : ${portfolio.cashByCurrency.keySet()}"
+                th:text="${#numbers.formatDecimal(portfolio.cashByCurrency.get(c), 1, 2)}"></td>
         </tr>
         <tr>
-            <td>Себестоимость позиций (<span th:text="${portfolio.baseCurrency}">RUB</span>)</td>
-            <td class="num" th:text="${#numbers.formatDecimal(portfolio.totalCostBasis, 1, 2)}">93000.00</td>
-        </tr>
-        <tr th:if="${portfolio.totalMarketValue != null}">
-            <td>Рыночная стоимость позиций</td>
-            <td class="num" th:text="${#numbers.formatDecimal(portfolio.totalMarketValue, 1, 2)}">—</td>
-        </tr>
-        <tr>
-            <th>Всего</th>
-            <th class="num" th:text="${#numbers.formatDecimal(portfolio.totalPortfolioValue, 1, 2)}">815400.00</th>
+            <td>Себестоимость позиций</td>
+            <td class="num" th:each="c : ${portfolio.cashByCurrency.keySet()}"
+                th:text="${#numbers.formatDecimal(
+                        portfolio.costBasisByCurrency.getOrDefault(c, T(java.math.BigDecimal).ZERO), 1, 2)}"></td>
         </tr>
         </tbody>
     </table>
+
+    <p class="meta">
+        Базовая валюта: <b th:text="${portfolio.baseCurrency}"></b>.
+        «Всего» ниже — только по базовой валюте (без конвертации остальных).
+    </p>
+
+    <table>
+        <tbody>
+        <tr>
+            <td>Денежные средства (<span th:text="${portfolio.baseCurrency}"></span>)</td>
+            <td class="num" th:text="${#numbers.formatDecimal(portfolio.totalCashValue, 1, 2)}"></td>
+        </tr>
+        <tr>
+            <td>Себестоимость позиций (<span th:text="${portfolio.baseCurrency}"></span>)</td>
+            <td class="num" th:text="${#numbers.formatDecimal(portfolio.totalCostBasis, 1, 2)}"></td>
+        </tr>
+        <tr th:if="${portfolio.totalMarketValue != null}">
+            <td>Рыночная стоимость позиций</td>
+            <td class="num" th:text="${#numbers.formatDecimal(portfolio.totalMarketValue, 1, 2)}"></td>
+        </tr>
+        <tr>
+            <th>Всего (<span th:text="${portfolio.baseCurrency}"></span>)</th>
+            <th class="num" th:text="${#numbers.formatDecimal(portfolio.totalPortfolioValue, 1, 2)}"></th>
+        </tr>
+        </tbody>
+    </table>
+
     <p class="empty" th:if="${portfolio.totalMarketValue == null}">
         Рыночная стоимость появится, когда будет подключён источник цен.
         Пока «Всего» = деньги + себестоимость позиций в базовой валюте.
-    </p>
-    <p class="empty">
-        В портфеле есть позиции в валютах, отличных от
-        <span th:text="${portfolio.baseCurrency}">RUB</span>.
-        Они не включены в итоги — для конвертации нужен источник курсов.
     </p>
 </div>
 

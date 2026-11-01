@@ -1,6 +1,7 @@
 package ru.redcarpet.stocks.model.service.impl;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,11 +36,6 @@ public class CashOperationServiceImpl implements CashOperationService {
     public CashOperation create(CreateCashOperationCommand command) {
         Objects.requireNonNull(command, "Create cash operation command is null");
 
-        if (command.operationType().isExchange()) {
-            throw new ValidationException(
-                    "Use /api/currency-exchanges for CURRENCY_EXCHANGE");
-        }
-
         Portfolio portfolio = portfolioRepository.findById(command.portfolioId())
                 .orElseThrow(() -> new NotFoundException(
                         "Portfolio not found: " + command.portfolioId()));
@@ -56,7 +52,6 @@ public class CashOperationServiceImpl implements CashOperationService {
         }
 
         CashOperation op = newCashOperation(portfolio, command);
-
         return cashOperationRepository.save(op);
     }
 

@@ -80,6 +80,8 @@ public class Holding {
             case SELL, TRANSFER_OUT -> applySell(event);
             case DIVIDEND           -> applyDividend(event);
             case COUPON             -> applyCoupon(event);
+            default -> throw new ValidationException(
+                    "Unsupported operation: " + event.getOperationType());
         }
     }
 
@@ -114,7 +116,8 @@ public class Holding {
 
         BigDecimal pnl = event.getPrice()
                 .subtract(this.avgPrice)
-                .multiply(sellQty);
+                .multiply(sellQty)
+                .setScale(2, RoundingMode.HALF_UP);
 
         this.realizedPnl = this.realizedPnl.add(pnl);
 
@@ -153,6 +156,10 @@ public class Holding {
         if (this.firstBuyDate == null || date.isBefore(this.firstBuyDate)) {
             this.firstBuyDate = date;
         }
+    }
+
+    public BigDecimal getCostBasis() {
+        return quantity.multiply(avgPrice);
     }
 
     // ====== lifecycle

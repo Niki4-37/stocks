@@ -16,5 +16,6 @@ public record CurrencyTrade(
         String buyCounterVolume, // Объём в сопряж. валюте (покупка)
         String sellRate,         // Курс сделки (продажа)
         String sellLotVolume,    // Объём в валюте лота (продажа)
-        String sellCounterVolume // Объём в сопряж. валюте (продажа)
+        String sellCounterVolume, // Объём в сопряж. валюте (продажа)
+        String place             // МосБирж(Валютный рынок)
 ) {}

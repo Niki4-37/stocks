@@ -1,16 +1,15 @@
 package ru.redcarpet.stocks.model.service.impl;
 
-import jakarta.transaction.Transactional;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.redcarpet.stocks.model.dto.CreateEventRequest;
-import ru.redcarpet.stocks.verification.trades.TradeKeyDto;
 import ru.redcarpet.stocks.model.entity.Event;
 import ru.redcarpet.stocks.model.entity.Portfolio;
 import ru.redcarpet.stocks.model.entity.Security;
 import ru.redcarpet.stocks.model.enums.OperationType;
-import ru.redcarpet.stocks.verification.trades.TradeSource;
 import ru.redcarpet.stocks.model.exception.ConflictException;
 import ru.redcarpet.stocks.model.exception.NotFoundException;
 import ru.redcarpet.stocks.model.exception.ValidationException;
@@ -23,7 +22,6 @@ import ru.redcarpet.stocks.model.service.HoldingService;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.LocalDate;
 import java.util.Currency;
 import java.util.Objects;
 
@@ -52,51 +50,37 @@ public class EventServiceImpl implements EventService {
         BigDecimal exchangeRate = resolveExchangeRate(request, baseCurrency);
 
         BigDecimal amount = computeAmount(request);
-
         applyCashMovement(portfolio, request, amount);
-
         Event event = buildEvent(portfolio, security, request, exchangeRate, amount);
-        Event saved = eventRepository.save(event);
-
-        holdingService.applyEvent(saved);
+        saveInternal(event);
     }
 
     @Override
-    public Event createFromTrade(
-            TradeKeyDto key,
-            Long portfolioId,
-            OperationType type,
-            BigDecimal price,
-            BigDecimal quantity,
-            Currency currency,
-            BigDecimal amount
-    ) {
-        Portfolio portfolio = portfolioRepository.findById(portfolioId)
-                .orElseThrow(() -> new NotFoundException("Portfolio not found: " + portfolioId));
-        Security security = securityRepository.findByIsin(key.tradeIsin())
-                .orElseThrow(() -> new NotFoundException("Security not found: " + key.tradeIsin()));
+    @Transactional
+    public Event save(Event event) {
+        return saveInternal(event);
+    }
 
-        Event event = new Event();
-        event.setPortfolio(portfolio);
-        event.setSecurity(security);
-        event.setOperationType(type);
-        event.setEventDate(LocalDate.now());        // или дата из отчёта, см. ниже
-        event.setPrice(price);
-        event.setQuantity(quantity);
-        event.setCurrency(currency);
-        event.setAmount(amount);
-
-        // внешний ключ
-        event.setTradeNumber(key.tradeNumber());
-        event.setTradeDate(key.tradeDate());
-        event.setTradeIsin(key.tradeIsin());
-        event.setTradeSource(TradeSource.BROKER_REPORT);
-
+    private Event saveInternal(Event event) {
         try {
-            return eventRepository.save(event);
+            Event saved = eventRepository.save(event);
+            holdingService.applyEvent(saved);
+            return saved;
         } catch (DataIntegrityViolationException e) {
-            throw new ConflictException("Trade already exists: " + key.tradeNumber());
+            throw new ConflictException("Trade already exists: " + event.getTradeNumber(), e);
         }
+    }
+
+    @Override
+    public boolean exists(Event event) {
+        return event != null
+                && event.getTradeNumber() != null
+                && eventRepository.existsByTradeKey(
+                event.getPortfolio().getId(),
+                event.getTradeSource(),
+                event.getTradeNumber(),
+                event.getTradeDate(),
+                event.getTradeIsin());
     }
 
     private Security resolveSecurity(CreateEventRequest request) {
@@ -140,14 +124,14 @@ public class EventServiceImpl implements EventService {
             if (req.getExchangeRate() != null
                     && req.getExchangeRate().compareTo(BigDecimal.ONE) != 0) {
                 throw new ValidationException(
-                        "exchangeRate must be null or 1 when currency == baseCurrency");
+                        "rate must be null or 1 when currency == baseCurrency");
             }
             return null;
         }
 
         if (req.getExchangeRate() == null || req.getExchangeRate().signum() <= 0) {
             throw new ValidationException(
-                    "exchangeRate is required when currency != baseCurrency");
+                    "rate is required when currency != baseCurrency");
         }
         return req.getExchangeRate();
     }

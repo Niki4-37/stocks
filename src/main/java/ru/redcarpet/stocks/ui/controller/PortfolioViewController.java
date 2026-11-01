@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import ru.redcarpet.stocks.model.service.PortfolioService;
 import ru.redcarpet.stocks.ui.dto.PortfolioForm;
-import ru.redcarpet.stocks.ui.dto.PortfolioResponse;
+import ru.redcarpet.stocks.model.dto.PortfolioResponse;
 
 import java.util.List;
 

@@ -12,5 +12,6 @@ import java.util.List;
 public record ParseResult(
         CashParseResult cashFlows,
         TradesResult trades,
+        List<CurrencyTrade> currencies,
         List<CheckRow> checks
 ) { }

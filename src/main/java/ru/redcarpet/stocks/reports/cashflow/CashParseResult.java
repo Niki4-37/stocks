@@ -1,6 +1,5 @@
 package ru.redcarpet.stocks.reports.cashflow;
 
-import ru.redcarpet.stocks.reports.common.DecimalParser;
 import ru.redcarpet.stocks.reports.dto.CashFlowRow;
 
 import java.math.BigDecimal;
@@ -16,7 +15,7 @@ public record CashParseResult(
     /** Итог по овернайт-процентам — для UI. */
     public BigDecimal overnightInterestsTotal() {
         return overnightInterests.stream()
-                .map(r -> DecimalParser.parse(r.amount()))
+                .map(CashFlowRow::amount)
                 .filter(Objects::nonNull)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }

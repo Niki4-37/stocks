@@ -1,9 +1,9 @@
-package ru.redcarpet.stocks.reports.trades;
+package ru.redcarpet.stocks.reports.currency;
 
 import org.apache.poi.ss.usermodel.DataFormatter;
 import org.apache.poi.ss.usermodel.Row;
+import ru.redcarpet.stocks.reports.dto.CurrencyIdentityFromReport;
 import ru.redcarpet.stocks.reports.dto.CurrencyTrade;
-import ru.redcarpet.stocks.reports.dto.SecurityIdentityFromReport;
 import ru.redcarpet.stocks.reports.enums.TradeSubsection;
 import ru.redcarpet.stocks.reports.common.CellReader;
 import ru.redcarpet.stocks.reports.common.HeaderColumnsMatcher;
@@ -12,7 +12,7 @@ import java.util.List;
 
 import static ru.redcarpet.stocks.reports.common.HeaderColumnsMatcher.findAllIndexesStartsWith;
 
-public final class CurrencyTradeLayout implements TradeLayout<CurrencyTrade> {
+public final class CurrencyTradeLayout {
 
     private static final String DATE        = "Дата";
     private static final String NUMBER      = "Номер";
@@ -33,12 +33,10 @@ public final class CurrencyTradeLayout implements TradeLayout<CurrencyTrade> {
     private int placeCol = -1;
     private boolean valid;
 
-    @Override
     public boolean isSupports(TradeSubsection subsection) {
         return subsection == TradeSubsection.CURRENCY;
     }
 
-    @Override
     public boolean tryUpdate(Row row, DataFormatter fmt) {
         int cBuyRate  = HeaderColumnsMatcher.findIndexExact(row, fmt, BUY_RATE);
         int cSellRate = HeaderColumnsMatcher.findIndexExact(row, fmt, SELL_RATE);
@@ -61,18 +59,15 @@ public final class CurrencyTradeLayout implements TradeLayout<CurrencyTrade> {
         return valid;
     }
 
-    @Override
     public void invalidate() {
         dateCol = numberCol = buyRateCol = sellRateCol = -1;
         buyLotCol = sellLotCol = buyCounterCol = sellCounterCol = -1;
         valid = false;
     }
 
-    @Override
     public boolean isValid() { return valid; }
 
-    @Override
-    public CurrencyTrade toTrade(Row row, DataFormatter fmt, SecurityIdentityFromReport security) {
+    public CurrencyTrade toTrade(Row row, DataFormatter fmt, CurrencyIdentityFromReport identity) {
         if (!valid) return null;
 
         String date = CellReader.read(row, dateCol, fmt);
@@ -82,9 +77,9 @@ public final class CurrencyTradeLayout implements TradeLayout<CurrencyTrade> {
         if (number.isBlank()) return null;
 
         return new CurrencyTrade(
-                security.ticker(),          // instrument (EURRUB_TOM)
-                security.name(),            // lotCurrency (EUR) — см. CurrencyIdentityParser
-                "",                         // counterCurrency (Рубль) — заполним ниже, если нужно
+                identity.instrument(),
+                identity.lotCurrency(),
+                identity.counterCurrency(),
                 date,
                 number,
                 CellReader.read(row, buyRateCol, fmt),
@@ -92,7 +87,8 @@ public final class CurrencyTradeLayout implements TradeLayout<CurrencyTrade> {
                 CellReader.read(row, buyCounterCol, fmt),
                 CellReader.read(row, sellRateCol, fmt),
                 CellReader.read(row, sellLotCol, fmt),
-                CellReader.read(row, sellCounterCol, fmt)
+                CellReader.read(row, sellCounterCol, fmt),
+                "МосБирж(Валютный рынок)"
         );
     }
 }

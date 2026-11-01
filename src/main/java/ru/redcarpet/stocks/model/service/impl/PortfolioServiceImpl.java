@@ -1,8 +1,6 @@
 package ru.redcarpet.stocks.model.service.impl;
 
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import lombok.Setter;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,23 +15,24 @@ import ru.redcarpet.stocks.model.repositories.PortfolioBalanceRepository;
 import ru.redcarpet.stocks.model.repositories.PortfolioRepository;
 import ru.redcarpet.stocks.model.service.BalanceService;
 import ru.redcarpet.stocks.model.service.PortfolioService;
-import ru.redcarpet.stocks.ui.dto.HoldingResponse;
-import ru.redcarpet.stocks.ui.dto.PortfolioDetailsResponse;
-import ru.redcarpet.stocks.ui.dto.PortfolioResponse;
+import ru.redcarpet.stocks.model.dto.HoldingResponse;
+import ru.redcarpet.stocks.model.dto.PortfolioDetailsResponse;
+import ru.redcarpet.stocks.model.dto.PortfolioResponse;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.Collection;
+import java.util.Comparator;
 import java.util.Currency;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.TreeMap;
+import java.util.function.Function;
 
-@Getter
-@Setter
 @Service
 @RequiredArgsConstructor
 public class PortfolioServiceImpl implements PortfolioService {
-
-    private Currency baseCurrency;
 
     private final PortfolioBalanceRepository balanceRepository;
     private final PortfolioRepository portfolioRepository;
@@ -95,28 +94,34 @@ public class PortfolioServiceImpl implements PortfolioService {
 
         List<Holding> rawHoldings = holdingRepository.findByPortfolioId(id);
 
-        List<HoldingResponse> holdings = rawHoldings.stream()
-                .map(h -> toHoldingResponse(h, null))  // currentPrice = null пока
-                .toList();
+        Map<Currency, BigDecimal> cashByCurrency = sumByCurrency(
+                base,
+                balances,
+                BalanceResponse::currency,
+                BalanceResponse::amount
+        );
+
+        Map<Currency, BigDecimal> costBasisByCurrency = sumByCurrency(
+            base,
+            rawHoldings,
+            Holding::getCurrency,
+            Holding::getCostBasis
+        );
 
         // агрегаты только по базовой валюте
-        BigDecimal totalCostBasis = rawHoldings.stream()
-                .filter(h -> h.getCurrency().equals(base))
-                .map(h -> h.getQuantity().multiply(h.getAvgPrice()))
-                .reduce(BigDecimal.ZERO, BigDecimal::add)
-                .setScale(2, RoundingMode.HALF_UP);
+        BigDecimal totalCostBasis = costBasisByCurrency.getOrDefault(base, BigDecimal.ZERO);
 
-        BigDecimal totalCashValue = balances.stream()
-                .filter(b -> b.currency().equals(base))
-                .map(BalanceResponse::amount)
-                .reduce(BigDecimal.ZERO, BigDecimal::add)
-                .setScale(2, RoundingMode.HALF_UP);
-
+        BigDecimal totalCashValue = cashByCurrency.getOrDefault(base, BigDecimal.ZERO);
         // рыночной стоимости пока нет
         BigDecimal totalMarketValue = null;
 
         // пока цен нет — «стоимость портфеля» = cash + себестоимость
-        BigDecimal totalPortfolioValue = totalCashValue.add(totalCostBasis);
+        BigDecimal totalPortfolioValue = totalCashValue.add(totalCostBasis)
+                .setScale(2, RoundingMode.HALF_UP);
+
+        List<HoldingResponse> holdings = rawHoldings.stream()
+                .map(h -> toHoldingResponse(h, null))
+                .toList();
 
         return new PortfolioDetailsResponse(
                 portfolio.getId(),
@@ -124,6 +129,8 @@ public class PortfolioServiceImpl implements PortfolioService {
                 base,
                 balances,
                 holdings,
+                cashByCurrency,
+                costBasisByCurrency,
                 totalCostBasis,
                 totalMarketValue,
                 totalCashValue,
@@ -131,8 +138,7 @@ public class PortfolioServiceImpl implements PortfolioService {
     }
 
     private HoldingResponse toHoldingResponse(Holding h, BigDecimal currentPrice) {
-        BigDecimal costBasis = h.getQuantity().multiply(h.getAvgPrice())
-                .setScale(2, RoundingMode.HALF_UP);
+        BigDecimal costBasis = h.getCostBasis().setScale(2, RoundingMode.HALF_UP);
 
         BigDecimal marketValue = currentPrice == null
                 ? null
@@ -151,5 +157,28 @@ public class PortfolioServiceImpl implements PortfolioService {
                 costBasis,
                 currentPrice,
                 marketValue);
+    }
+
+    private static <T> Map<Currency, BigDecimal> sumByCurrency(
+            Currency base,
+            Collection<T> items,
+            Function<T, Currency> currencyExtractor,
+            Function<T, BigDecimal> amountExtractor
+    ) {
+        Comparator<Currency> byBaseFirst = (a, b) -> {
+            if (a.equals(b)) return 0;
+            if (a.equals(base)) return -1;
+            if (b.equals(base)) return 1;
+            return a.getCurrencyCode().compareTo(b.getCurrencyCode());
+        };
+        Map<Currency, BigDecimal> result = new TreeMap<>(byBaseFirst);
+        for (T item : items) {
+            Currency currency = currencyExtractor.apply(item);
+            BigDecimal amount = amountExtractor.apply(item);
+            if (Objects.isNull(currency) || Objects.isNull(amount)) continue;
+            result.merge(currency, amount, BigDecimal::add);
+        }
+        result.replaceAll((c, v) -> v.setScale(2, RoundingMode.HALF_UP));
+        return result;
     }
 }

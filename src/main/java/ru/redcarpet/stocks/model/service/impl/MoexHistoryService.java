@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
-import ru.redcarpet.stocks.model.dto.MoexResponse;
+import ru.redcarpet.stocks.external.MoexResponse;
 
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;

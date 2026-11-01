@@ -46,7 +46,7 @@
         <tr th:each="r : ${cashIncomes}">
             <td th:text="${r.date()}"></td>
             <td th:text="${r.operation()}"></td>
-            <td class="num" th:text="${r.income()}"></td>
+            <td class="num" th:text="${#numbers.formatDecimal(r.amount(), 1, 2)}"></td>
             <td th:text="${r.platform()}"></td>
             <td th:text="${r.dividendNote() != null ? r.dividendNote().issuer() : ''}"></td>
             <td th:text="${r.dividendNote() != null ? r.dividendNote().isin() : ''}"></td>
@@ -77,7 +77,7 @@
             <tr th:each="r : ${overnightInterests}">
                 <td th:text="${r.date()}"></td>
                 <td th:text="${r.operation()}"></td>
-                <td class="num" th:text="${r.income()}"></td>
+                <td class="num" th:text="${#numbers.formatDecimal(r.amount(), 1, 2)}"></td>
                 <td th:text="${r.currency()}"></td>
                 <td th:text="${r.platform()}"></td>
             </tr>
@@ -99,7 +99,7 @@
         <tr th:each="r : ${cashExpenses}">
             <td th:text="${r.date()}"></td>
             <td th:text="${r.operation()}"></td>
-            <td class="num" th:text="${r.expense()}"></td>
+            <td class="num" th:text="${#numbers.formatDecimal(r.amount(), 1, 2)}"></td>
             <td th:text="${r.platform()}"></td>
         </tr>
         </tbody>
@@ -346,11 +346,11 @@
         </tbody>
     </table>
 
-    <form th:if="${cashVerification != null and cashVerification.summary().missing() > 0}"
+    <form th:if="${cashIncomes != null or stocks != null or currencies != null}"
           th:action="@{/ui/reports/upload/import}"
           method="post">
         <input type="hidden" name="portfolioId" th:value="${portfolioId}">
-        <button type="submit">Импортировать отсутствующие</button>
+        <button type="submit">Импортировать</button>
     </form>
 </div>
 

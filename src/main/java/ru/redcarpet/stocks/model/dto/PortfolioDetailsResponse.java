@@ -1,10 +1,9 @@
-package ru.redcarpet.stocks.ui.dto;
-
-import ru.redcarpet.stocks.model.dto.BalanceResponse;
+package ru.redcarpet.stocks.model.dto;
 
 import java.math.BigDecimal;
 import java.util.Currency;
 import java.util.List;
+import java.util.Map;
 
 public record PortfolioDetailsResponse(
         Long id,
@@ -12,7 +11,8 @@ public record PortfolioDetailsResponse(
         Currency baseCurrency,
         List<BalanceResponse> balances,
         List<HoldingResponse> holdings,
-
+        Map<Currency, BigDecimal> cashByCurrency,
+        Map<Currency, BigDecimal> costBasisByCurrency,
         // агрегаты по позициям, в базовой валюте портфеля
         BigDecimal totalCostBasis,
         BigDecimal totalMarketValue,   // null, пока нет цен

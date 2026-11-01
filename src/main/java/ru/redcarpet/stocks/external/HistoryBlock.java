@@ -1,4 +1,4 @@
-package ru.redcarpet.stocks.model.dto;
+package ru.redcarpet.stocks.external;
 
 import java.util.List;
 

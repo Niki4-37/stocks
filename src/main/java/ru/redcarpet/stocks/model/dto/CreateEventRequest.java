@@ -51,7 +51,7 @@ public class CreateEventRequest {
                                @JsonProperty("eventDate") LocalDate eventDate,
                                @JsonProperty("price") BigDecimal price,
                                @JsonProperty("currency") Currency currency,
-                               @JsonProperty("exchangeRate") BigDecimal exchangeRate,
+                               @JsonProperty("rate") BigDecimal exchangeRate,
                                @JsonProperty("quantity") BigDecimal quantity
     ) {
         this.portfolioId = portfolioId;

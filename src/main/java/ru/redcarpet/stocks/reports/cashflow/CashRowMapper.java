@@ -11,7 +11,10 @@ import ru.redcarpet.stocks.reports.dto.CashFlowRow;
 import ru.redcarpet.stocks.reports.dto.TotalsEntry;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Currency;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -19,15 +22,15 @@ import java.util.Optional;
 public final class CashRowMapper {
 
     /** Детальная строка раздела 1.1 или null, если не подходит. */
-    public CashFlowRow toRubCashOperation(Row row, DataFormatter fmt, ColumnHeaders columnHeaders, Currency currency) {
-        if (!columnHeaders.hasDate()) return null;
+    public List<CashFlowRow> toCashOperations(Row row, DataFormatter fmt, ColumnHeaders columnHeaders, Currency currency) {
+        if (!columnHeaders.hasDate()) return List.of();
 
         String date = columnHeaders.date(row, fmt);
-        if (!DateParser.isBrokerDate(date)) return null;
+        if (!DateParser.isBrokerDate(date)) return List.of();
 
         String op = columnHeaders.operation(row, fmt);
         Optional<CashOperationType> typeOpt = CashOperationType.byDisplayName(op);
-        if (typeOpt.isEmpty()) return null;
+        if (typeOpt.isEmpty()) return List.of();
         CashOperationType type = typeOpt.get();
 
         String incomeStr  = columnHeaders.income(row, fmt);
@@ -35,23 +38,29 @@ public final class CashRowMapper {
         BigDecimal income  = DecimalParser.parse(incomeStr);
         BigDecimal expense = DecimalParser.parse(expenseStr);
 
-        if (!hasAnyAmount(income, expense)) return null;
-        if (!matchesDirection(type, income, expense)) return null;
-
         String platform = columnHeaders.platform(row, fmt);
-        if (platform.isBlank()) return null;
 
         DividendNote dividendNote = type.isDividend()
                 ? DividendNote.parse(columnHeaders.note(row, fmt))
                 : null;
 
-        CashFlowDirection direction = directionOf(expense);
+        List<CashFlowRow> result = new ArrayList<>(2);
 
-        return new CashFlowRow(
-                date, op, direction, currency, platform, dividendNote,
-                isPositive(income)  ? incomeStr  : "",
-                isPositive(expense) ? expenseStr : ""
-        );
+        for (var candidate : List.of(
+                Map.entry(CashFlowDirection.INCOME, income),
+                Map.entry(CashFlowDirection.EXPENSE, expense))) {
+            CashFlowDirection direction = candidate.getKey();
+            BigDecimal amount = candidate.getValue();
+
+            if (!isPositive(amount)) continue;
+            if (type.getDirection() != null && type.getDirection() != direction) {
+                continue;
+            }
+
+            result.add(new CashFlowRow(date, op, direction, currency, platform, dividendNote, amount));
+        }
+
+        return result;
     }
 
     /** Итоговая строка 1.3 или null, если не подходит. */
@@ -85,9 +94,5 @@ public final class CashRowMapper {
                 : CashFlowDirection.INCOME;
     }
 
-    private static boolean matchesDirection(CashOperationType type, BigDecimal income, BigDecimal expense) {
-        if (type.getDirection() == CashFlowDirection.INCOME  && !isPositive(income))  return false;
-        if (type.getDirection() == CashFlowDirection.EXPENSE && !isPositive(expense)) return false;
-        return true;
-    }
+
 }

@@ -5,7 +5,6 @@ import ru.redcarpet.stocks.model.enums.CashOperationType;
 import ru.redcarpet.stocks.model.exception.ValidationException;
 import ru.redcarpet.stocks.reports.cashflow.CashParseResult;
 import ru.redcarpet.stocks.reports.common.DateParser;
-import ru.redcarpet.stocks.reports.common.DecimalParser;
 import ru.redcarpet.stocks.reports.dto.CashFlowRow;
 import ru.redcarpet.stocks.verification.trades.TradeSource;
 
@@ -48,7 +47,7 @@ public class CashCheckRequestMapper {
                 type,
                 cashFlowRow.platform(),
                 cashFlowRow.direction(),
-                DecimalParser.parse(cashFlowRow.amount()),
+                cashFlowRow.amount(),
                 cashFlowRow.currency()
         );
     }

@@ -1,4 +1,4 @@
-package ru.redcarpet.stocks.ui.dto;
+package ru.redcarpet.stocks.model.dto;
 
 import java.math.BigDecimal;
 import java.util.Currency;

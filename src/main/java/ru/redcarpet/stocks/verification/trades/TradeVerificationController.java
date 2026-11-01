@@ -15,7 +15,7 @@ public class TradeVerificationController {
     private final TradeVerificationService verificationService;
 
     @PostMapping("/check")
-    public CheckTradesResponse check(@Valid @RequestBody CheckTradesRequest request) {
+    public TradesCheckResponse check(@Valid @RequestBody TradesCheckRequest request) {
         return verificationService.check(request);
     }
 }

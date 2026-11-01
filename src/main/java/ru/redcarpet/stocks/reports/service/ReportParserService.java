@@ -11,15 +11,15 @@ import ru.redcarpet.stocks.reports.cashflow.CashParseResult;
 import ru.redcarpet.stocks.reports.cashflow.CashParser;
 import ru.redcarpet.stocks.reports.cashflow.CashRowMapper;
 import ru.redcarpet.stocks.reports.cashflow.FeesChecksBuilder;
-import ru.redcarpet.stocks.reports.common.ReportSlicer;
+import ru.redcarpet.stocks.reports.common.ReportSectionSlicer;
 import ru.redcarpet.stocks.reports.dto.CheckRow;
-import ru.redcarpet.stocks.reports.dto.CashFlowRow;
 import ru.redcarpet.stocks.reports.dto.ParseResult;
 import ru.redcarpet.stocks.reports.dto.SectionRows;
-import ru.redcarpet.stocks.reports.dto.TradesResult;
+import ru.redcarpet.stocks.reports.dto.TradeParseResult;
 import ru.redcarpet.stocks.reports.cashflow.FeesAndPenaltiesParser;
 import ru.redcarpet.stocks.reports.trades.TradesParser;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
 import java.util.List;
@@ -29,14 +29,14 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class ReportParserService {
 
-    private final ReportSlicer slicer;
-    private final CashParser cashOperationParser;
+    private final ReportSectionSlicer slicer;
+    private final CashParser cashParser;
     private final FeesAndPenaltiesParser feesParser;
     private final TradesParser tradesParser;
     private final FeesChecksBuilder checksBuilder;
     private final CashRowMapper mapper;
 
-    public ParseResult parse(MultipartFile file) throws Exception {
+    public ParseResult parse(MultipartFile file) throws IOException {
         try (InputStream is = file.getInputStream();
              Workbook wb = WorkbookFactory.create(is)) {
 
@@ -45,12 +45,12 @@ public class ReportParserService {
 
             SectionRows sections = slicer.slice(sheet, fmt);
 
-            CashParseResult cashFlows = cashOperationParser.parse(sections.cashOperations(), fmt, mapper);
+            CashParseResult cashFlows = cashParser.parse(sections.cashOperations(), fmt, mapper);
             Map<String, BigDecimal> totals = feesParser.parse(sections.feesAndPenalties(), fmt, mapper);
-            TradesResult trades = tradesParser.parse(sections.trades(), fmt);
+            TradeParseResult trades = tradesParser.parse(sections.trades(), fmt);
             List<CheckRow> checks = checksBuilder.build(cashFlows.expenses(), totals);
 
-            return new ParseResult(cashFlows, trades, checks);
+            return new ParseResult(cashFlows, trades.papers(), trades.currencies(), checks);
         }
     }
 }

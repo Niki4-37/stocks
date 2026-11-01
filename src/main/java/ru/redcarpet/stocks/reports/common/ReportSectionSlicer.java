@@ -12,7 +12,7 @@ import java.util.List;
 
 /** Один проход по листу: раскладывает строки по разделам отчёта. */
 @Component
-public final class ReportSlicer {
+public final class ReportSectionSlicer {
 
     public SectionRows slice(Sheet sheet, DataFormatter fmt) {
         List<Row> cash = new ArrayList<>();

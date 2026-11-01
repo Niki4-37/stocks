@@ -1,5 +1,6 @@
 package ru.redcarpet.stocks.reports.trades;
 
+import ru.redcarpet.stocks.reports.currency.CurrencyTradeLayout;
 import ru.redcarpet.stocks.reports.enums.TradeSubsection;
 
 public final class TradeLayoutFactory {

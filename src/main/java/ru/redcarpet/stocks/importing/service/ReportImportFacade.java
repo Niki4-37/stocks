@@ -18,6 +18,7 @@ public class ReportImportFacade {
     private final PortfolioRepository portfolioRepository;
     private final CashImportService cashImportService;
     private final TradeImportService tradeImportService;
+    private final CurrencyTradeImportService currencyTradeImportService;
 
     @Transactional
     public ImportReportResult importReport(Long portfolioId, ParseResult parsed) {
@@ -25,11 +26,14 @@ public class ReportImportFacade {
                 .orElseThrow(() -> new NotFoundException("Portfolio not found: " + portfolioId));
 
         ImportResult cashInserted = cashImportService.importFlows(
-                portfolio.getId(), parsed.cashFlows().summarizedCash(), TradeSource.BROKER_REPORT);
+                portfolioId, parsed.cashFlows().summarizedCash(), TradeSource.BROKER_REPORT);
 
         ImportResult tradesInserted = tradeImportService.importTrades(
                 portfolio, parsed.trades());
 
-        return new ImportReportResult(cashInserted, tradesInserted);
+        ImportResult currencies = currencyTradeImportService.importCurrencies(
+                portfolio, parsed.currencies());
+
+        return new ImportReportResult(cashInserted, tradesInserted, currencies);
     }
 }

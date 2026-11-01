@@ -1,4 +1,4 @@
-package ru.redcarpet.stocks.ui.dto;
+package ru.redcarpet.stocks.model.dto;
 
 import java.time.Instant;
 import java.util.Currency;

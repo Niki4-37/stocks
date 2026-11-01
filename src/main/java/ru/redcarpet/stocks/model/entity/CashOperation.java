@@ -57,15 +57,6 @@ public class CashOperation {
     @Column(name = "amount", nullable = false, precision = 19, scale = 2)
     private BigDecimal amount;
 
-    @Column(name = "target_currency", length = 3)
-    private Currency targetCurrency;
-
-    @Column(name = "target_amount", precision = 19, scale = 2)
-    private BigDecimal targetAmount;
-
-    @Column(name = "exchange_rate", precision = 19, scale = 8)
-    private BigDecimal exchangeRate;
-
     @Column(name = "comment", length = 500)
     private String comment;
 

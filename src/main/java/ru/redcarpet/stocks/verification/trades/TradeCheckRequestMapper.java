@@ -8,8 +8,6 @@ import ru.redcarpet.stocks.reports.dto.FundTrade;
 import ru.redcarpet.stocks.reports.dto.StockTrade;
 import ru.redcarpet.stocks.reports.dto.TradesResult;
 
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,7 +15,7 @@ import java.util.List;
 @Component
 public class TradeCheckRequestMapper {
 
-    public CheckTradesRequest toCheckRequest(Long portfolioId, TradesResult trades) {
+    public TradesCheckRequest toCheckRequest(Long portfolioId, TradesResult trades, List<CurrencyTrade> currencies) {
         List<TradeKeyDto> keys = new ArrayList<>();
 
         for (StockTrade t : trades.stocks()) {
@@ -30,10 +28,10 @@ public class TradeCheckRequestMapper {
             keys.add(new TradeKeyDto(t.number(), DateParser.parseBrokerDate(t.date()), t.isin()));
         }
         // валюта: ISIN нет, но номер + дата достаточно
-        for (CurrencyTrade t : trades.currencies()) {
+        for (CurrencyTrade t : currencies) {
             keys.add(new TradeKeyDto(t.number(), DateParser.parseBrokerDate(t.date()), ""));
         }
 
-        return new CheckTradesRequest(portfolioId, TradeSource.BROKER_REPORT, keys);
+        return new TradesCheckRequest(portfolioId, TradeSource.BROKER_REPORT, keys);
     }
 }

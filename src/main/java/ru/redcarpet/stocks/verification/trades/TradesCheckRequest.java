@@ -5,7 +5,7 @@ import jakarta.validation.constraints.NotNull;
 
 import java.util.List;
 
-public record CheckTradesRequest(
+public record TradesCheckRequest(
         @NotNull Long portfolioId,
         @NotNull TradeSource tradeSource,
         @NotEmpty List<TradeKeyDto> trades
