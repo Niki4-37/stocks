@@ -8,7 +8,7 @@ import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
 import java.util.Currency;
 
-public record CreatePortfolioRequest(
+public record CreatePortfolioCommand(
         @NotBlank @Size(max = 100) String name,
         @NotNull Currency baseCurrency,
         @PositiveOrZero BigDecimal initialBalance

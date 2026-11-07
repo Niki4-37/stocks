@@ -1,16 +1,15 @@
 package ru.redcarpet.stocks.model.service;
 
-import ru.redcarpet.stocks.model.dto.BalanceResponse;
-import ru.redcarpet.stocks.model.dto.CreatePortfolioRequest;
-import ru.redcarpet.stocks.model.dto.PortfolioDetailsResponse;
-import ru.redcarpet.stocks.model.dto.PortfolioResponse;
+import ru.redcarpet.stocks.model.dto.CreatePortfolioCommand;
+import ru.redcarpet.stocks.model.dto.PortfolioDetails;
+import ru.redcarpet.stocks.model.dto.PortfolioBasicInfo;
 import ru.redcarpet.stocks.model.entity.Portfolio;
 
 import java.util.List;
 
 public interface PortfolioService {
-    Portfolio create(CreatePortfolioRequest request);
-    List<BalanceResponse> getPortfolioBalances(Long id);
-    List<PortfolioResponse> findAllPortfolios();
-    PortfolioDetailsResponse findById(Long id);
+    Portfolio create(CreatePortfolioCommand request);
+    List<PortfolioDetails.Balance> getPortfolioBalances(Long id);
+    List<PortfolioBasicInfo> findAllPortfolios();
+    PortfolioDetails findById(Long id);
 }

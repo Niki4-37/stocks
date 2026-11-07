@@ -4,8 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.redcarpet.stocks.model.dto.BalanceResponse;
-import ru.redcarpet.stocks.model.dto.CreatePortfolioRequest;
+import ru.redcarpet.stocks.model.dto.CreatePortfolioCommand;
 import ru.redcarpet.stocks.model.entity.Holding;
 import ru.redcarpet.stocks.model.entity.Portfolio;
 import ru.redcarpet.stocks.model.exception.ConflictException;
@@ -14,9 +13,8 @@ import ru.redcarpet.stocks.model.repositories.HoldingRepository;
 import ru.redcarpet.stocks.model.repositories.PortfolioBalanceRepository;
 import ru.redcarpet.stocks.model.repositories.PortfolioRepository;
 import ru.redcarpet.stocks.model.service.PortfolioService;
-import ru.redcarpet.stocks.model.dto.HoldingResponse;
-import ru.redcarpet.stocks.model.dto.PortfolioDetailsResponse;
-import ru.redcarpet.stocks.model.dto.PortfolioResponse;
+import ru.redcarpet.stocks.model.dto.PortfolioDetails;
+import ru.redcarpet.stocks.model.dto.PortfolioBasicInfo;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -39,7 +37,7 @@ public class PortfolioServiceImpl implements PortfolioService {
 
     @Override
     @Transactional
-    public Portfolio create(CreatePortfolioRequest request) {
+    public Portfolio create(CreatePortfolioCommand request) {
         Portfolio portfolio = new Portfolio();
         portfolio.setName(request.name().trim());
         portfolio.setBaseCurrency(request.baseCurrency());
@@ -53,16 +51,16 @@ public class PortfolioServiceImpl implements PortfolioService {
     }
 
     @Override
-    public List<BalanceResponse> getPortfolioBalances(Long id) {
+    public List<PortfolioDetails.Balance> getPortfolioBalances(Long id) {
         return balanceRepository.findAllByPortfolioId(id).stream()
-                .map(pb -> new BalanceResponse(pb.getCurrency(), pb.getAmount()))
+                .map(pb -> new PortfolioDetails.Balance(pb.getCurrency(), pb.getAmount()))
                 .toList();
     }
 
     @Override
-    public List<PortfolioResponse> findAllPortfolios() {
+    public List<PortfolioBasicInfo> findAllPortfolios() {
         return portfolioRepository.findAll().stream()
-                .map(portfolio -> new PortfolioResponse(
+                .map(portfolio -> new PortfolioBasicInfo(
                         portfolio.getId(),
                         portfolio.getName(),
                         portfolio.getBaseCurrency(),
@@ -71,21 +69,21 @@ public class PortfolioServiceImpl implements PortfolioService {
     }
 
     @Override
-    public PortfolioDetailsResponse findById(Long id) {
+    public PortfolioDetails findById(Long id) {
         Portfolio portfolio = portfolioRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Portfolio not found: " + id));
 
         Currency base = portfolio.getBaseCurrency();
 
-        List<BalanceResponse> balances = getPortfolioBalances(id);
+        List<PortfolioDetails.Balance> balances = getPortfolioBalances(id);
 
         List<Holding> rawHoldings = holdingRepository.findByPortfolioId(id);
 
         Map<Currency, BigDecimal> cashByCurrency = sumByCurrency(
                 base,
                 balances,
-                BalanceResponse::currency,
-                BalanceResponse::amount
+                PortfolioDetails.Balance::currency,
+                PortfolioDetails.Balance::amount
         );
 
         Map<Currency, BigDecimal> costBasisByCurrency = sumByCurrency(
@@ -106,11 +104,11 @@ public class PortfolioServiceImpl implements PortfolioService {
         BigDecimal totalPortfolioValue = totalCashValue.add(totalCostBasis)
                 .setScale(2, RoundingMode.HALF_UP);
 
-        List<HoldingResponse> holdings = rawHoldings.stream()
-                .map(h -> toHoldingResponse(h, null))
+        List<PortfolioDetails.HeldSecurity> holdings = rawHoldings.stream()
+                .map(this::toHoldingResponse)
                 .toList();
 
-        return new PortfolioDetailsResponse(
+        return new PortfolioDetails(
                 portfolio.getId(),
                 portfolio.getName(),
                 base,
@@ -124,15 +122,10 @@ public class PortfolioServiceImpl implements PortfolioService {
                 totalPortfolioValue);
     }
 
-    private HoldingResponse toHoldingResponse(Holding h, BigDecimal currentPrice) {
+    private PortfolioDetails.HeldSecurity toHoldingResponse(Holding h) {
         BigDecimal costBasis = h.getCostBasis().setScale(2, RoundingMode.HALF_UP);
 
-        BigDecimal marketValue = currentPrice == null
-                ? null
-                : h.getQuantity().multiply(currentPrice)
-                .setScale(2, RoundingMode.HALF_UP);
-
-        return new HoldingResponse(
+        return new PortfolioDetails.HeldSecurity(
                 h.getSecurity().getTicker(),
                 h.getSecurity().getName(),
                 h.getQuantity(),
@@ -141,9 +134,7 @@ public class PortfolioServiceImpl implements PortfolioService {
                 h.getTotalDividends(),
                 h.getTotalCoupons(),
                 h.getRealizedPnl(),
-                costBasis,
-                currentPrice,
-                marketValue);
+                costBasis);
     }
 
     private static <T> Map<Currency, BigDecimal> sumByCurrency(

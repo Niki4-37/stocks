@@ -8,14 +8,12 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import ru.redcarpet.stocks.model.dto.CreatePortfolioRequest;
-import ru.redcarpet.stocks.model.entity.Portfolio;
-import ru.redcarpet.stocks.model.service.BalanceService;
-import ru.redcarpet.stocks.model.service.PortfolioService;
-import ru.redcarpet.stocks.ui.dto.PortfolioForm;
-import ru.redcarpet.stocks.model.dto.PortfolioResponse;
+import ru.redcarpet.stocks.application.PortfolioFacade;
+import ru.redcarpet.stocks.model.dto.CreatePortfolioCommand;
+import ru.redcarpet.stocks.model.dto.PortfolioBasicInfo;
 
 import java.math.BigDecimal;
+import java.util.Currency;
 import java.util.List;
 
 @Controller
@@ -23,12 +21,11 @@ import java.util.List;
 @RequiredArgsConstructor
 public class PortfolioViewController {
 
-    private final PortfolioService portfolioService;
-    private final BalanceService balanceService;
+    private final PortfolioFacade facade;
 
     @GetMapping
     public String list(Model model) {
-        List<PortfolioResponse> portfolios = portfolioService.findAllPortfolios();
+        List<PortfolioBasicInfo> portfolios = facade.list();
         model.addAttribute("portfolios", portfolios);
         return "portfolios/list";
     }
@@ -36,24 +33,24 @@ public class PortfolioViewController {
     /** Форма создания */
     @GetMapping("/new")
     public String createForm(Model model) {
-        model.addAttribute("request", new PortfolioForm());
+        model.addAttribute(
+                "request",
+                new CreatePortfolioCommand(
+                    "Название портфеля",
+                    Currency.getInstance("RUB"),
+                    BigDecimal.ZERO
+        ));
         return "portfolios/form";
     }
 
     /** Обработка формы */
     @PostMapping
     public String create(
-        @ModelAttribute("request") PortfolioForm form,
+        @ModelAttribute("request") CreatePortfolioCommand cmd,
         Model model
     ) {
         try {
-            CreatePortfolioRequest req = form.toRequest();
-            Portfolio portfolio = portfolioService.create(req);
-
-            BigDecimal initial = req.initialBalance();
-            if (initial != null && initial.signum() > 0) {
-                balanceService.credit(portfolio.getId(), req.baseCurrency(), initial);
-            }
+            facade.create(cmd);
             return "redirect:/ui/portfolios";
         } catch (Exception e) {
             model.addAttribute("error", e.getMessage());
@@ -63,7 +60,7 @@ public class PortfolioViewController {
 
     @GetMapping("/{id}")
     public String details(@PathVariable Long id, Model model) {
-        model.addAttribute("portfolio", portfolioService.findById(id));
+        model.addAttribute("portfolio", facade.details(id));
         return "portfolios/details";
     }
 }

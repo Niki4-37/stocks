@@ -74,7 +74,7 @@
 <div class="section">
     <h2>Позиции</h2>
 
-    <table th:if="${not #lists.isEmpty(portfolio.holdings)}">
+    <table th:if="${not #lists.isEmpty(portfolio.securities)}">
         <thead>
         <tr>
             <th>Тикер</th>
@@ -86,11 +86,10 @@
             <th class="num">Купоны</th>
             <th class="num">Реализовано</th>
             <th class="num">Себестоимость</th>
-            <th class="num">Рыночная стоимость</th>
         </tr>
         </thead>
         <tbody>
-        <tr th:each="h : ${portfolio.holdings}">
+        <tr th:each="h : ${portfolio.securities}">
             <td th:text="${h.ticker}">LKOH</td>
             <td th:text="${h.name}">Лукойл</td>
             <td class="num" th:text="${#numbers.formatDecimal(h.quantity, 1, 6)}">10.000000</td>
@@ -100,16 +99,11 @@
             <td class="num" th:text="${#numbers.formatDecimal(h.totalCoupons, 1, 2)}">0.00</td>
             <td class="num" th:text="${#numbers.formatDecimal(h.realizedPnl, 1, 2)}">1000.00</td>
             <td class="num" th:text="${#numbers.formatDecimal(h.costBasis, 1, 2)}">61000.00</td>
-            <td class="num">
-                <span th:if="${h.marketValue != null}"
-                    th:text="${#numbers.formatDecimal(h.marketValue, 1, 2)}">—</span>
-                <span th:if="${h.marketValue == null}" class="empty">—</span>
-            </td>
         </tr>
         </tbody>
     </table>
 
-    <p class="empty" th:if="${#lists.isEmpty(portfolio.holdings)}">
+    <p class="empty" th:if="${#lists.isEmpty(portfolio.securities)}">
         Открытых позиций нет.
     </p>
 </div>

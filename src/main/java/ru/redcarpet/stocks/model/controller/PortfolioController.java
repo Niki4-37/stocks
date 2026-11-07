@@ -9,9 +9,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import ru.redcarpet.stocks.model.dto.BalanceResponse;
-import ru.redcarpet.stocks.model.dto.CreatePortfolioRequest;
-import ru.redcarpet.stocks.model.service.PortfolioService;
+import ru.redcarpet.stocks.application.PortfolioFacade;
+import ru.redcarpet.stocks.model.dto.CreatePortfolioCommand;
+import ru.redcarpet.stocks.model.dto.PortfolioDetails;
 
 import java.util.List;
 
@@ -20,16 +20,16 @@ import java.util.List;
 @RequiredArgsConstructor
 public class PortfolioController {
 
-    private final PortfolioService portfolioService;
+    private final PortfolioFacade facade;
 
     @PostMapping
-    public ResponseEntity<String> create(@RequestBody CreatePortfolioRequest request) {
-        portfolioService.create(request);
+    public ResponseEntity<String> create(@RequestBody CreatePortfolioCommand request) {
+        facade.create(request);
         return ResponseEntity.status(HttpStatus.CREATED).body("Portfolio successfully created!");
     }
 
     @GetMapping("/{id}/balances")
-    public List<BalanceResponse> getBalance(@PathVariable("id") Long id) {
-        return portfolioService.getPortfolioBalances(id);
+    public List<PortfolioDetails.Balance> getBalances(@PathVariable("id") Long id) {
+        return facade.balances(id);
     }
 }
