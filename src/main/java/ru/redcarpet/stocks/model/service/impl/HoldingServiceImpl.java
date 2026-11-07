@@ -18,8 +18,6 @@ import java.util.Currency;
 @RequiredArgsConstructor
 public class HoldingServiceImpl implements HoldingService {
 
-    private static final int AVG_PRICE_SCALE = 6;
-
     private final HoldingRepository repository;
 
     @Override

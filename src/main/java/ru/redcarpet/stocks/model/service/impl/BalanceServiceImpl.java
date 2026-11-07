@@ -31,7 +31,6 @@ public class BalanceServiceImpl implements BalanceService {
     private final PortfolioBalanceRepository balanceRepository;
     private final CashOperationRepository cashOperationRepository;
     private final PortfolioRepository portfolioRepository;
-    private final CashOperationService cashOperationService;
 
     @Override
     @Transactional

@@ -51,8 +51,8 @@ public class EventServiceImpl implements EventService {
 
     @Override
     @Transactional
-    public Event save(Event event) {
-        return saveInternal(event);
+    public void save(Event event) {
+        saveInternal(event);
     }
 
     private Event saveInternal(Event event) {

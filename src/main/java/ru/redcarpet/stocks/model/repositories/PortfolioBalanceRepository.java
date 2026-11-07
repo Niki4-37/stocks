@@ -22,6 +22,5 @@ public interface PortfolioBalanceRepository extends JpaRepository<PortfolioBalan
             @Param("currency") Currency currency);
 
     List<PortfolioBalance> findAllByPortfolioId(Long portfolioId);
-    Optional<PortfolioBalance> findByPortfolioIdAndCurrency(Long portfolioId, Currency currency);
     void deleteByPortfolioId(Long portfolioId);
 }

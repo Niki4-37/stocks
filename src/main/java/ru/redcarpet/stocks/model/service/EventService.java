@@ -7,7 +7,7 @@ import java.math.BigDecimal;
 
 public interface EventService {
     void create(CreateEventRequest request);
-    Event save(Event event);
+    void save(Event event);
     boolean exists(Event event);
     BigDecimal computeAmount(CreateEventRequest request);
 }

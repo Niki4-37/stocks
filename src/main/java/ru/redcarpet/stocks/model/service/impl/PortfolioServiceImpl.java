@@ -62,12 +62,11 @@ public class PortfolioServiceImpl implements PortfolioService {
     @Override
     public List<PortfolioResponse> findAllPortfolios() {
         return portfolioRepository.findAll().stream()
-                .map(portfolio -> {
-                    return new PortfolioResponse(
-                            portfolio.getId(),
-                            portfolio.getName(),
-                            portfolio.getBaseCurrency(),
-                            portfolio.getCreatedAt());})
+                .map(portfolio -> new PortfolioResponse(
+                        portfolio.getId(),
+                        portfolio.getName(),
+                        portfolio.getBaseCurrency(),
+                        portfolio.getCreatedAt()))
                 .toList();
     }
 
