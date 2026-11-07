@@ -13,7 +13,6 @@ import ru.redcarpet.stocks.model.exception.NotFoundException;
 import ru.redcarpet.stocks.model.repositories.HoldingRepository;
 import ru.redcarpet.stocks.model.repositories.PortfolioBalanceRepository;
 import ru.redcarpet.stocks.model.repositories.PortfolioRepository;
-import ru.redcarpet.stocks.model.service.BalanceService;
 import ru.redcarpet.stocks.model.service.PortfolioService;
 import ru.redcarpet.stocks.model.dto.HoldingResponse;
 import ru.redcarpet.stocks.model.dto.PortfolioDetailsResponse;
@@ -36,41 +35,32 @@ public class PortfolioServiceImpl implements PortfolioService {
 
     private final PortfolioBalanceRepository balanceRepository;
     private final PortfolioRepository portfolioRepository;
-    private final BalanceService balanceService;
     private final HoldingRepository holdingRepository;
 
     @Override
     @Transactional
-    public void create(CreatePortfolioRequest request) {
+    public Portfolio create(CreatePortfolioRequest request) {
         Portfolio portfolio = new Portfolio();
         portfolio.setName(request.name().trim());
         portfolio.setBaseCurrency(request.baseCurrency());
 
-        Portfolio saved;
         try {
-            saved = portfolioRepository.saveAndFlush(portfolio);
+            return portfolioRepository.saveAndFlush(portfolio);
         } catch (DataIntegrityViolationException e) {
-            // сработал uq_portfolios_name
             throw new ConflictException(
                     "Portfolio with name '" + request.name() + "' already exists");
-        }
-
-        // начальный баланс, если задан
-        BigDecimal initial = request.initialBalance();
-        if (Objects.nonNull(initial) && initial.signum() > 0) {
-            balanceService.credit(saved, request.baseCurrency(), initial);
         }
     }
 
     @Override
-    public List<BalanceResponse> getBalances(Long id) {
+    public List<BalanceResponse> getPortfolioBalances(Long id) {
         return balanceRepository.findAllByPortfolioId(id).stream()
                 .map(pb -> new BalanceResponse(pb.getCurrency(), pb.getAmount()))
                 .toList();
     }
 
     @Override
-    public List<PortfolioResponse> findAll() {
+    public List<PortfolioResponse> findAllPortfolios() {
         return portfolioRepository.findAll().stream()
                 .map(portfolio -> {
                     return new PortfolioResponse(
@@ -88,9 +78,7 @@ public class PortfolioServiceImpl implements PortfolioService {
 
         Currency base = portfolio.getBaseCurrency();
 
-        List<BalanceResponse> balances = balanceService.getAll(portfolio).stream()
-                .map(b -> new BalanceResponse(b.getCurrency(), b.getAmount()))
-                .toList();
+        List<BalanceResponse> balances = getPortfolioBalances(id);
 
         List<Holding> rawHoldings = holdingRepository.findByPortfolioId(id);
 

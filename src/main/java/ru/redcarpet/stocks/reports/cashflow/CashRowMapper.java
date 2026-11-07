@@ -1,5 +1,6 @@
 package ru.redcarpet.stocks.reports.cashflow;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.DataFormatter;
 import org.apache.poi.ss.usermodel.Row;
 import org.springframework.stereotype.Component;
@@ -18,6 +19,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
+@Slf4j
 @Component
 public final class CashRowMapper {
 
@@ -38,9 +40,18 @@ public final class CashRowMapper {
         BigDecimal income  = DecimalParser.parse(incomeStr);
         BigDecimal expense = DecimalParser.parse(expenseStr);
 
+        // запоминаем, было ли сторно (знак в отчёте не совпадал с типом)
+        boolean wasReversal =
+                (type.getDirection() == CashFlowDirection.EXPENSE && expense.signum() < 0)
+                        || (type.getDirection() == CashFlowDirection.INCOME  && income.signum()  < 0);
+
+        log.info("Operation:{} with income:{} or expence:{}", type, income, expense);
+        if (income.signum() < 0) { expense = expense.add(income.negate()); income = BigDecimal.ZERO; }
+        if (expense.signum() < 0) { income = income.add(expense.negate()); expense = BigDecimal.ZERO; }
+
         String platform = columnHeaders.platform(row, fmt);
 
-        DividendNote dividendNote = type.isDividend()
+        DividendNote dividendNote = type.hasDividendFeature()
                 ? DividendNote.parse(columnHeaders.note(row, fmt))
                 : null;
 
@@ -53,11 +64,14 @@ public final class CashRowMapper {
             BigDecimal amount = candidate.getValue();
 
             if (!isPositive(amount)) continue;
-            if (type.getDirection() != null && type.getDirection() != direction) {
-                continue;
-            }
 
-            result.add(new CashFlowRow(date, op, direction, currency, platform, dividendNote, amount));
+            // если направление НЕ совпадает с типом — пропускаем, КРОМЕ случая сторно
+            boolean matchesType = type.getDirection() == null || type.getDirection() == direction;
+            if (!matchesType && !wasReversal) continue;
+
+            log.debug("parsed new CashFlowRow: date={}, type={}, direction={}, currency={}, amount={}",
+                    date, type, direction, currency, amount);
+            result.add(new CashFlowRow(date, type, direction, currency, platform, dividendNote, amount));
         }
 
         return result;
@@ -80,19 +94,8 @@ public final class CashRowMapper {
         return new TotalsEntry(op, platform, amount);
     }
 
-    private static boolean hasAnyAmount(BigDecimal income, BigDecimal expense) {
-        return isPositive(income) || isPositive(expense);
-    }
-
     private static boolean isPositive(BigDecimal v) {
         return Objects.nonNull(v) && v.compareTo(BigDecimal.ZERO) > 0;
     }
-
-    private static CashFlowDirection directionOf(BigDecimal expense) {
-        return isPositive(expense)
-                ? CashFlowDirection.EXPENSE
-                : CashFlowDirection.INCOME;
-    }
-
 
 }

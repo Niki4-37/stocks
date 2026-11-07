@@ -41,3 +41,9 @@ moex:
   url: https://iss.moex.com/iss
   connection-duration-sec: 10
   read-duration-sec: 10
+
+logging:
+  level:
+    root: INFO
+    org.springframework.web: DEBUG
+    ru.redcarpet.stocks: DEBUG

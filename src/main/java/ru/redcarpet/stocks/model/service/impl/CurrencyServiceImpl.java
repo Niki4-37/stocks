@@ -9,10 +9,8 @@ import ru.redcarpet.stocks.model.entity.Portfolio;
 import ru.redcarpet.stocks.model.exception.NotFoundException;
 import ru.redcarpet.stocks.model.repositories.CurrencyTradeRepository;
 import ru.redcarpet.stocks.model.repositories.PortfolioRepository;
-import ru.redcarpet.stocks.model.service.BalanceService;
 import ru.redcarpet.stocks.model.service.CurrencyService;
 
-import java.math.BigDecimal;
 import java.util.Currency;
 
 @Slf4j
@@ -22,7 +20,6 @@ public class CurrencyServiceImpl implements CurrencyService {
 
     private final CurrencyTradeRepository repository;
     private final PortfolioRepository portfolioRepository;
-    private final BalanceService balanceService;
 
     @Override
     public CurrencyTradeEntity exchange(CreateCurrencyExchangeRequest request) {
@@ -34,22 +31,6 @@ public class CurrencyServiceImpl implements CurrencyService {
         Currency lot     = request.lotCurrency();
         Currency counter = request.counterCurrency();
 
-        BigDecimal rate = request.resolvedRate();
-        BigDecimal lotVolume = request.resolvedLotVolume();
-        BigDecimal counterVolume = request.resolvedCounterVolume();
-
-        if (request.isManual()) {
-            if (request.isBuying()) {
-                balanceService.debit(portfolio, counter, counterVolume);
-                balanceService.credit(portfolio, lot, lotVolume);
-            } else {
-                balanceService.debit(portfolio, lot, lotVolume);
-                balanceService.credit(portfolio, counter, counterVolume);
-            }
-        }
-
-        boolean isBuy = request.isBuying();
-
         // запись сделки
         CurrencyTradeEntity entity = new CurrencyTradeEntity();
         entity.setPortfolio(portfolio);
@@ -59,9 +40,9 @@ public class CurrencyServiceImpl implements CurrencyService {
         entity.setTradeNumber(request.tradeNumber());
         entity.setTradeDate(request.operationDate());
         entity.setOperationType(request.operationType());
-        entity.setRate(rate);
-        entity.setLotVolume(isBuy ? request.counterVolume() : request.lotVolume());
-        entity.setCounterVolume(isBuy ? request.lotVolume() : request.counterVolume());
+        entity.setRate(request.resolvedRate());
+        entity.setLotVolume(request.resolvedLotVolume());
+        entity.setCounterVolume(request.resolvedCounterVolume());
         entity.setPlatform(request.platform());
         entity.setSource(request.source());
 

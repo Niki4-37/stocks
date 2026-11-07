@@ -1,6 +1,5 @@
 package ru.redcarpet.stocks.model.service.impl;
 
-
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
@@ -9,14 +8,12 @@ import ru.redcarpet.stocks.model.dto.CreateEventRequest;
 import ru.redcarpet.stocks.model.entity.Event;
 import ru.redcarpet.stocks.model.entity.Portfolio;
 import ru.redcarpet.stocks.model.entity.Security;
-import ru.redcarpet.stocks.model.enums.OperationType;
 import ru.redcarpet.stocks.model.exception.ConflictException;
 import ru.redcarpet.stocks.model.exception.NotFoundException;
 import ru.redcarpet.stocks.model.exception.ValidationException;
 import ru.redcarpet.stocks.model.repositories.EventRepository;
 import ru.redcarpet.stocks.model.repositories.PortfolioRepository;
 import ru.redcarpet.stocks.model.repositories.SecurityRepository;
-import ru.redcarpet.stocks.model.service.BalanceService;
 import ru.redcarpet.stocks.model.service.EventService;
 import ru.redcarpet.stocks.model.service.HoldingService;
 
@@ -32,7 +29,6 @@ public class EventServiceImpl implements EventService {
     private final EventRepository eventRepository;
     private final PortfolioRepository portfolioRepository;
     private final SecurityRepository securityRepository;
-    private final BalanceService balanceService;
     private final HoldingService holdingService;
 
     @Override
@@ -43,14 +39,12 @@ public class EventServiceImpl implements EventService {
                         "Portfolio not found: " + request.getPortfolioId()));
 
         Security security = resolveSecurity(request);
-
         validate(request);
 
         Currency baseCurrency = portfolio.getBaseCurrency();
         BigDecimal exchangeRate = resolveExchangeRate(request, baseCurrency);
-
         BigDecimal amount = computeAmount(request);
-        applyCashMovement(portfolio, request, amount);
+
         Event event = buildEvent(portfolio, security, request, exchangeRate, amount);
         saveInternal(event);
     }
@@ -136,28 +130,13 @@ public class EventServiceImpl implements EventService {
         return req.getExchangeRate();
     }
 
-    private BigDecimal computeAmount(CreateEventRequest req) {
+    @Override
+    public BigDecimal computeAmount(CreateEventRequest req) {
         BigDecimal price = req.getPrice();
         if (req.getQuantity() == null) {
             return price.setScale(2, RoundingMode.HALF_UP);
         }
         return price.multiply(req.getQuantity()).setScale(2, RoundingMode.HALF_UP);
-    }
-
-    private void applyCashMovement(Portfolio portfolio,
-                                   CreateEventRequest req,
-                                   BigDecimal amount
-    ) {
-        OperationType type = req.getOperationType();
-        if (!type.affectsCash()) return;
-
-        Currency currency = req.getCurrency();
-
-        switch (type.getCashDir()) {
-            case IN -> balanceService.credit(portfolio, currency, amount);
-            case OUT -> balanceService.debit(portfolio, currency, amount);
-            case NONE -> { }
-        }
     }
 
     private Event buildEvent(

@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-import ru.redcarpet.stocks.importing.dto.ImportReportResult;
+import ru.redcarpet.stocks.importing.dto.ImportSummarizedResult;
 import ru.redcarpet.stocks.importing.service.ReportImportFacade;
 import ru.redcarpet.stocks.model.exception.ValidationException;
 import ru.redcarpet.stocks.reports.dto.ParseResult;
@@ -74,7 +74,7 @@ public class ReportController {
         }
 
         try {
-            ImportReportResult result = facade.importReport(portfolioId, parsed);
+            ImportSummarizedResult result = facade.importReport(portfolioId, parsed);
 
             session.removeAttribute(SESSION_PARSE_RESULT);
 

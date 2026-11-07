@@ -4,10 +4,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.redcarpet.stocks.importing.dto.CashImportResult;
 import ru.redcarpet.stocks.importing.dto.ImportResult;
 import ru.redcarpet.stocks.model.dto.CreateCashOperationCommand;
+import ru.redcarpet.stocks.model.entity.CashOperation;
 import ru.redcarpet.stocks.model.enums.CashOperationType;
-import ru.redcarpet.stocks.model.exception.ValidationException;
 import ru.redcarpet.stocks.model.service.CashOperationService;
 import ru.redcarpet.stocks.reports.common.DateParser;
 import ru.redcarpet.stocks.reports.dto.CashFlowRow;
@@ -33,11 +34,11 @@ public class CashImportService {
      * а в БД уже M — создаём max(0, N-M).
      */
     @Transactional
-    public ImportResult importFlows(Long portfolioId,
-                                    List<CashFlowRow> rows,
-                                    TradeSource source
+    public CashImportResult importFlows(Long portfolioId,
+                                        List<CashFlowRow> rows,
+                                        TradeSource source
     ) {
-        if (rows.isEmpty()) return ImportResult.empty();
+        if (rows.isEmpty()) return CashImportResult.empty();
 
         // группируем отчётные строки по контентному ключу
         Map<String, List<CashFlowRow>> byKey = rows.stream()
@@ -49,18 +50,12 @@ public class CashImportService {
         int inserted = 0;
         int skipped = 0;
         List<String> warnings = new ArrayList<>();
+        List<CashOperation> savedDividends = new ArrayList<>();
 
         for (List<CashFlowRow> sameRows : byKey.values()) {
             CashFlowRow first = sameRows.get(0);
 
-            CashOperationType type;
-            try {
-                type = CashOperationType.requireByDisplayName(first.operation());
-            } catch (ValidationException e) {
-                warnings.add(e.getMessage());
-                skipped += sameRows.size();
-                continue;
-            }
+            CashOperationType type = first.operation();
 
             LocalDate date;
             try {
@@ -84,20 +79,26 @@ public class CashImportService {
             for (int i = 0; i < toInsert; i++) {
                 log.info("Importing cash operation: operation={}, date={}, direction={}, amount={}",
                         first.operation(), first.date(), first.direction(), first.amount());
-                cashOperationService.create(toCommand(portfolioId, first, type, date, source));
+                CashOperation saved = cashOperationService.create(toCommand(portfolioId, first, date, source));
                 inserted++;
+
+                if (first.operation().hasDividendFeature()) {
+                    savedDividends.add(saved);
+                }
             }
             skipped += sameRows.size() - toInsert;
         }
 
-        return new ImportResult(inserted, skipped, warnings);
+        return new CashImportResult(
+                new ImportResult(inserted, skipped, warnings),
+                savedDividends);
     }
 
     private CreateCashOperationCommand toCommand(Long portfolioId, CashFlowRow row,
-                                                 CashOperationType type, LocalDate date,
-                                                 TradeSource source) {
+                                                 LocalDate date, TradeSource source
+    ) {
         CreateCashOperationCommand.DividendFields dividend = null;
-        if (type.isDividend() && row.dividendNote() != null) {
+        if (row.operation().hasDividendFeature() && row.dividendNote() != null) {
             dividend = new CreateCashOperationCommand.DividendFields(
                     row.dividendNote().issuer(),
                     row.dividendNote().isin(),
@@ -108,7 +109,7 @@ public class CashImportService {
 
         return new CreateCashOperationCommand(
                 portfolioId,
-                type,
+                row.operation(),
                 row.direction(),
                 date,
                 row.currency(),

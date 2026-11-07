@@ -8,10 +8,14 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import ru.redcarpet.stocks.model.dto.CreatePortfolioRequest;
+import ru.redcarpet.stocks.model.entity.Portfolio;
+import ru.redcarpet.stocks.model.service.BalanceService;
 import ru.redcarpet.stocks.model.service.PortfolioService;
 import ru.redcarpet.stocks.ui.dto.PortfolioForm;
 import ru.redcarpet.stocks.model.dto.PortfolioResponse;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Controller
@@ -20,10 +24,11 @@ import java.util.List;
 public class PortfolioViewController {
 
     private final PortfolioService portfolioService;
+    private final BalanceService balanceService;
 
     @GetMapping
     public String list(Model model) {
-        List<PortfolioResponse> portfolios = portfolioService.findAll();
+        List<PortfolioResponse> portfolios = portfolioService.findAllPortfolios();
         model.addAttribute("portfolios", portfolios);
         return "portfolios/list";
     }
@@ -42,7 +47,13 @@ public class PortfolioViewController {
         Model model
     ) {
         try {
-            portfolioService.create(form.toRequest());
+            CreatePortfolioRequest req = form.toRequest();
+            Portfolio portfolio = portfolioService.create(req);
+
+            BigDecimal initial = req.initialBalance();
+            if (initial != null && initial.signum() > 0) {
+                balanceService.credit(portfolio.getId(), req.baseCurrency(), initial);
+            }
             return "redirect:/ui/portfolios";
         } catch (Exception e) {
             model.addAttribute("error", e.getMessage());

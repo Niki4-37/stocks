@@ -30,6 +30,6 @@ public class PortfolioController {
 
     @GetMapping("/{id}/balances")
     public List<BalanceResponse> getBalance(@PathVariable("id") Long id) {
-        return portfolioService.getBalances(id);
+        return portfolioService.getPortfolioBalances(id);
     }
 }

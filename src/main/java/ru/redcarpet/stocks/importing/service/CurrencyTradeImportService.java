@@ -38,7 +38,7 @@ public class CurrencyTradeImportService {
             try {
                 if (importOne(portfolio, t)) inserted++; else skipped++;
             } catch (RuntimeException e) {
-                log.warn("Failed to import currency trade {}: {}", t.number(), e.getMessage(), e);
+                log.warn("Failed to import currencies trade {}: {}", t.number(), e.getMessage(), e);
                 warnings.add("Currency trade " + t.number() + ": " + e.getMessage());
                 skipped++;
             }

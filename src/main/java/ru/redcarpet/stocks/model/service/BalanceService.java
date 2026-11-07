@@ -1,7 +1,7 @@
 package ru.redcarpet.stocks.model.service;
 
+import ru.redcarpet.stocks.model.dto.BalanceMismatch;
 import ru.redcarpet.stocks.model.entity.Portfolio;
-import ru.redcarpet.stocks.model.entity.PortfolioBalance;
 
 import java.math.BigDecimal;
 import java.util.Currency;
@@ -9,15 +9,22 @@ import java.util.List;
 
 public interface BalanceService {
 
+    /** Движение на счёте (credit/debit). */
+    void apply(Long portfolioId, Currency currency, BigDecimal delta);
+
     /** Зачислить сумму (положительную) */
-    void credit(Portfolio portfolio, Currency currency, BigDecimal amount);
+    default void credit(Long portfolioId, Currency currency, BigDecimal amount) {
+        apply(portfolioId, currency, amount);
+    }
 
     /** Списать сумму (положительную). Бросает исключение при недостатке */
-    void debit(Portfolio portfolio, Currency currency, BigDecimal amount);
+    default void debit(Long portfolioId, Currency currency, BigDecimal amount) {
+        apply(portfolioId, currency, amount.negate());
+    }
 
-    /** Текущий баланс по валюте (0, если записи нет) */
-    BigDecimal getBalance(Portfolio portfolio, Currency currency);
+    /** Пересчёт кэша из cash_operations. */
+    void recalculate(Portfolio portfolio);
 
-    /** Все балансы портфеля */
-    List<PortfolioBalance> getAll(Portfolio portfolio);
+    /** Сверка кэша с ожидаемым. */
+    List<BalanceMismatch> check(Long portfolioId);
 }

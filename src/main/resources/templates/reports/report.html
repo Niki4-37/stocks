@@ -32,7 +32,6 @@
 <h3 th:text="'Файл: ' + ${fileName}"></h3>
 
 <div class="section" th:if="${not #lists.isEmpty(cashIncomes)}">
-    <h2>Движение денежных средств: поступления</h2>
     <h3>Движение денежных средств: поступления</h3>
     <table>
         <thead>
@@ -45,7 +44,7 @@
         <tbody>
         <tr th:each="r : ${cashIncomes}">
             <td th:text="${r.date()}"></td>
-            <td th:text="${r.operation()}"></td>
+            <td th:text="${r.operation().getDisplayName()}"></td>
             <td class="num" th:text="${#numbers.formatDecimal(r.amount(), 1, 2)}"></td>
             <td th:text="${r.platform()}"></td>
             <td th:text="${r.dividendNote() != null ? r.dividendNote().issuer() : ''}"></td>
@@ -76,7 +75,7 @@
             <tbody>
             <tr th:each="r : ${overnightInterests}">
                 <td th:text="${r.date()}"></td>
-                <td th:text="${r.operation()}"></td>
+                <td th:text="${r.operation().getDisplayName()}"></td>
                 <td class="num" th:text="${#numbers.formatDecimal(r.amount(), 1, 2)}"></td>
                 <td th:text="${r.currency()}"></td>
                 <td th:text="${r.platform()}"></td>
@@ -98,7 +97,7 @@
         <tbody>
         <tr th:each="r : ${cashExpenses}">
             <td th:text="${r.date()}"></td>
-            <td th:text="${r.operation()}"></td>
+            <td th:text="${r.operation().getDisplayName()}"></td>
             <td class="num" th:text="${#numbers.formatDecimal(r.amount(), 1, 2)}"></td>
             <td th:text="${r.platform()}"></td>
         </tr>
@@ -243,7 +242,7 @@
 
 <!-- ================= Иностранная валюта ================= -->
 <div class="section" th:if="${not #lists.isEmpty(currencies)}">
-    <h2>Сделки: Иностранная валюта</h2>
+    <h3>Сделки: Иностранная валюта</h3>
     <table>
         <thead>
         <tr>
@@ -269,6 +268,7 @@
         </tbody>
     </table>
 </div>
+
 <div class="section" th:if="${verification != null}">
     <h3>Сверка с БД (портфель <span th:text="${verification.portfolioId()}"></span>)</h3>
 
@@ -352,26 +352,6 @@
         <input type="hidden" name="portfolioId" th:value="${portfolioId}">
         <button type="submit">Импортировать</button>
     </form>
-</div>
-
-<div class="section" th:if="${importResult != null}">
-    <p class="meta">
-        Импортировано:
-        движение средств — <b th:text="${importResult.cashInserted()}"></b>
-        (пропущено <b th:text="${importResult.cashSkipped()}"></b>),
-        сделок — <b th:text="${importResult.tradesInserted()}"></b>
-        (пропущено <b th:text="${importResult.tradesSkipped()}"></b>).
-    </p>
-    <div th:if="${not #lists.isEmpty(importResult.warnings())}">
-        <p class="empty">Предупреждения:</p>
-        <ul>
-            <li th:each="w : ${importResult.warnings()}" th:text="${w}"></li>
-        </ul>
-    </div>
-</div>
-
-<div class="section" th:if="${error != null}">
-    <p class="fail" th:text="${error}"></p>
 </div>
 
 </body>

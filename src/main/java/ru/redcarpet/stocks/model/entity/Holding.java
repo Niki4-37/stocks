@@ -78,8 +78,6 @@ public class Holding {
         switch (event.getOperationType()) {
             case BUY, TRANSFER_IN   -> applyBuy(event);
             case SELL, TRANSFER_OUT -> applySell(event);
-            case DIVIDEND           -> applyDividend(event);
-            case COUPON             -> applyCoupon(event);
             default -> throw new ValidationException(
                     "Unsupported operation: " + event.getOperationType());
         }
@@ -125,25 +123,24 @@ public class Holding {
         updateLastEventDate(event.getEventDate());
     }
 
-    public void applyDividend(Event event) {
-        requireSameCurrency(event);
-        this.totalDividends = this.totalDividends.add(event.getAmount());
-        updateLastEventDate(event.getEventDate());
+    public void applyDividend(BigDecimal amount, Currency currency, LocalDate date) {
+        requireSameCurrency(currency);
+        this.totalDividends = this.totalDividends.add(amount);
+        updateLastEventDate(date);
     }
 
-    public void applyCoupon(Event event) {
-        requireSameCurrency(event);
-        this.totalCoupons = this.totalCoupons.add(event.getAmount());
-        updateLastEventDate(event.getEventDate());
+    public void applyCoupon(BigDecimal amount, Currency currency, LocalDate date) {
+        requireSameCurrency(currency);
+        this.totalCoupons = this.totalCoupons.add(amount);
+        updateLastEventDate(date);
     }
 
     // ====== utils
-    private void requireSameCurrency(Event event) {
-        if (event.getCurrency().equals(this.currency))  return;
-
+    private void requireSameCurrency(Currency eventCurrency) {
+        if (eventCurrency.equals(this.currency)) return;
         throw new ValidationException(String.format(
-                "%s in %s differs from position currency %s — not supported yet",
-                event.getOperationType(), event.getCurrency(), this.currency));
+                "Dividend/coupon in %s differs from position currency %s — not supported yet",
+                eventCurrency, this.currency));
     }
 
     private void updateLastEventDate(LocalDate eventDate) {

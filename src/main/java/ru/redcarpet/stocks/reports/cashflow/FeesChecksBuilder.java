@@ -2,7 +2,6 @@ package ru.redcarpet.stocks.reports.cashflow;
 
 import org.springframework.stereotype.Component;
 import ru.redcarpet.stocks.model.enums.CashFlowDirection;
-import ru.redcarpet.stocks.model.enums.CashOperationType;
 import ru.redcarpet.stocks.reports.dto.CheckRow;
 import ru.redcarpet.stocks.reports.dto.CashFlowRow;
 
@@ -23,12 +22,13 @@ public final class FeesChecksBuilder {
         Map<String, BigDecimal> detailSums = new LinkedHashMap<>();
 
         for (CashFlowRow cashFlowRow : operations) {
-            if (cashFlowRow.direction() != CashFlowDirection.EXPENSE) continue;
-            if (!CashOperationType.isChecking(cashFlowRow.operation())) continue;
-
+            if (!cashFlowRow.operation().hasCheckingFeature()) continue;
+            BigDecimal value = cashFlowRow.direction() == CashFlowDirection.EXPENSE
+                    ? cashFlowRow.amount()
+                    : cashFlowRow.amount().negate();
             detailSums.merge(
-                    key(cashFlowRow.operation(), cashFlowRow.platform()),
-                    cashFlowRow.amount(),
+                    key(cashFlowRow.operation().getDisplayName(), cashFlowRow.platform()),
+                    value,
                     BigDecimal::add);
         }
 

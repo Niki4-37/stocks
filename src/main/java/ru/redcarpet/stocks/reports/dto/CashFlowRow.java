@@ -1,6 +1,7 @@
 package ru.redcarpet.stocks.reports.dto;
 
 import ru.redcarpet.stocks.model.enums.CashFlowDirection;
+import ru.redcarpet.stocks.model.enums.CashOperationType;
 import ru.redcarpet.stocks.reports.cashflow.DividendNote;
 
 import java.math.BigDecimal;
@@ -17,7 +18,7 @@ import java.util.Currency;
  */
 public record CashFlowRow(
         String date,
-        String operation,
+        CashOperationType operation,
         CashFlowDirection direction,
         Currency currency,
         String platform,
@@ -25,7 +26,6 @@ public record CashFlowRow(
         BigDecimal amount
 ) {
     public boolean isIncome()  { return direction == CashFlowDirection.INCOME; }
-    public boolean isExpense() { return direction == CashFlowDirection.EXPENSE; }
 
     public String noteRaw() {
         return dividendNote == null ? "" : dividendNote.raw();

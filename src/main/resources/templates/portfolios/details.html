@@ -173,5 +173,52 @@
     </p>
 </div>
 
+<!-- ================= Результат импорта ================= -->
+<div class="section" th:if="${importResult != null}">
+    <h2>Результат импорта</h2>
+
+    <p class="meta">
+        Движение средств — <b th:text="${importResult.cash().inserted()}"></b>
+        (пропущено <b th:text="${importResult.cash().skipped()}"></b>),
+        сделок — <b th:text="${importResult.trades().inserted()}"></b>
+        (пропущено <b th:text="${importResult.trades().skipped()}"></b>),
+        дивидендов/купонов — <b th:text="${importResult.dividends().inserted()}"></b>,
+        валютных сделок — <b th:text="${importResult.currencies().inserted()}"></b>.
+    </p>
+
+    <!-- warnings -->
+    <div th:if="${not #lists.isEmpty(importResult.warnings())}">
+        <p class="empty">Предупреждения:</p>
+        <ul>
+            <li th:each="w : ${importResult.warnings()}" th:text="${w}"></li>
+        </ul>
+    </div>
+
+    <!-- mismatches -->
+    <div th:if="${importResult.hasBalanceMismatches()}">
+        <p class="fail">Баланс был скорректирован при импорте:</p>
+        <table>
+            <thead>
+            <tr>
+                <th>Валюта</th>
+                <th class="num">Кэш (до)</th>
+                <th class="num">Ожидалось</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="m : ${importResult.balanceMismatches()}">
+                <td th:text="${m.currency()}"></td>
+                <td class="num" th:text="${#numbers.formatDecimal(m.cached(), 1, 2)}"></td>
+                <td class="num" th:text="${#numbers.formatDecimal(m.expected(), 1, 2)}"></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="section" th:if="${error != null}">
+    <p class="fail" th:text="${error}"></p>
+</div>
+
 </body>
 </html>

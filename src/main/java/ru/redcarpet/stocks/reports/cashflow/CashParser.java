@@ -43,7 +43,7 @@ public final class CashParser {
 
             List<CashFlowRow> ops = mapper.toCashOperations(row, fmt, columns, currentCurrency);
             for (CashFlowRow op : ops) {
-                if (CashOperationType.isOvernightInterest(op.operation())) {
+                if (op.operation() == CashOperationType.INTEREST) {
                     overnightInterests.add(op);
                 } else if (op.isIncome()) {
                     incomes.add(op);

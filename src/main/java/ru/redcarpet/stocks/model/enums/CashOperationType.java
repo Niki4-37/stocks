@@ -1,7 +1,5 @@
 package ru.redcarpet.stocks.model.enums;
 
-import ru.redcarpet.stocks.model.exception.ValidationException;
-
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -24,7 +22,8 @@ public enum CashOperationType {
     INTEREST("Проценты по займам \"овернайт\"", CashFlowDirection.INCOME),
     TAX("НДФЛ",                             CashFlowDirection.EXPENSE),
     BUY_SELL("Покупка/Продажа",     null),
-    DEPO_FEE("Вознаграждение за обслуживание счета депо", CashFlowDirection.EXPENSE, Feature.CHECKING);
+    DEPO_FEE("Вознаграждение за обслуживание счета депо", CashFlowDirection.EXPENSE, Feature.CHECKING),
+    WITHDRAWAL_FEE("Оплата за вывод денежных средств", CashFlowDirection.EXPENSE, Feature.CHECKING);
 
     private final String displayName;
     private final CashFlowDirection direction;
@@ -41,8 +40,8 @@ public enum CashOperationType {
     public CashFlowDirection getDirection() { return direction; }
 
     public boolean has(Feature f) { return features.contains(f); }
-    public boolean isDividend()   { return has(Feature.DIVIDEND); }
-    public boolean isChecking() { return has(Feature.CHECKING); }
+    public boolean hasDividendFeature() { return has(Feature.DIVIDEND); }
+    public boolean hasCheckingFeature() { return has(Feature.CHECKING); }
 
     public static Optional<CashOperationType> byDisplayName(String title) {
         if (Objects.isNull(title)) return Optional.empty();
@@ -50,29 +49,6 @@ public enum CashOperationType {
         return Arrays.stream(values())
                 .filter(op -> op.displayName.equalsIgnoreCase(t))
                 .findFirst();
-    }
-
-    public static CashOperationType requireByDisplayName(String title) {
-        return byDisplayName(title).orElseThrow(() -> new ValidationException(
-                "Unknown operation: " + title));
-    }
-
-    public static boolean isExpense(String title) {
-        return byDisplayName(title)
-                .map(op -> op.getDirection() == CashFlowDirection.EXPENSE)
-                .orElse(false);
-    }
-
-    public static boolean isOvernightInterest(String title) {
-        return byDisplayName(title)
-                .map(op -> op == INTEREST)
-                .orElse(false);
-    }
-
-    public static boolean isChecking(String title) {
-        return byDisplayName(title)
-                .map(CashOperationType::isChecking)
-                .orElse(false);
     }
 
     public enum Feature {

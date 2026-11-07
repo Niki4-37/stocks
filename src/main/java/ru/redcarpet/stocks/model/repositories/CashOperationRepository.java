@@ -13,6 +13,8 @@ import java.util.List;
 
 public interface CashOperationRepository extends JpaRepository<CashOperation, Long> {
 
+    List<CashOperation> findByPortfolioId(Long portfolioId);
+
     List<CashOperation> findByPortfolioIdAndSourceAndOperationDateBetween(
             Long portfolioId, TradeSource source, LocalDate from, LocalDate to);
 

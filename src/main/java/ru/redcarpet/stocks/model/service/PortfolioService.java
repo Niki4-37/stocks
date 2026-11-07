@@ -4,13 +4,13 @@ import ru.redcarpet.stocks.model.dto.BalanceResponse;
 import ru.redcarpet.stocks.model.dto.CreatePortfolioRequest;
 import ru.redcarpet.stocks.model.dto.PortfolioDetailsResponse;
 import ru.redcarpet.stocks.model.dto.PortfolioResponse;
+import ru.redcarpet.stocks.model.entity.Portfolio;
 
-import java.util.Currency;
 import java.util.List;
 
 public interface PortfolioService {
-    void create(CreatePortfolioRequest request);
-    List<BalanceResponse> getBalances(Long id);
-    List<PortfolioResponse> findAll();
+    Portfolio create(CreatePortfolioRequest request);
+    List<BalanceResponse> getPortfolioBalances(Long id);
+    List<PortfolioResponse> findAllPortfolios();
     PortfolioDetailsResponse findById(Long id);
 }

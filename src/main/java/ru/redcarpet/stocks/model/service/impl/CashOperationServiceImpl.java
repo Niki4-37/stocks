@@ -1,7 +1,6 @@
 package ru.redcarpet.stocks.model.service.impl;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,7 +13,6 @@ import ru.redcarpet.stocks.model.exception.NotFoundException;
 import ru.redcarpet.stocks.model.exception.ValidationException;
 import ru.redcarpet.stocks.model.repositories.CashOperationRepository;
 import ru.redcarpet.stocks.model.repositories.PortfolioRepository;
-import ru.redcarpet.stocks.model.service.BalanceService;
 import ru.redcarpet.stocks.model.service.CashOperationService;
 import ru.redcarpet.stocks.verification.trades.TradeSource;
 
@@ -29,7 +27,6 @@ public class CashOperationServiceImpl implements CashOperationService {
 
     private final CashOperationRepository cashOperationRepository;
     private final PortfolioRepository portfolioRepository;
-    private final BalanceService balanceService;
 
     @Override
     @Transactional
@@ -43,12 +40,6 @@ public class CashOperationServiceImpl implements CashOperationService {
         BigDecimal amount = command.amount();
         if (Objects.isNull(amount) || amount.signum() <= 0) {
             throw new ValidationException("amount must be > 0");
-        }
-
-        // движение денег
-        switch (command.direction()) {
-            case INCOME  -> balanceService.credit(portfolio, command.currency(), amount);
-            case EXPENSE -> balanceService.debit(portfolio, command.currency(), amount);
         }
 
         CashOperation op = newCashOperation(portfolio, command);
