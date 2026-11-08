@@ -1,0 +1,34 @@
+body {
+    font-family: sans-serif; margin: 2rem;
+    background-color: #1e1f22;
+    background-image:
+            radial-gradient(circle at top right,   rgba(42, 109, 244, 0.15) 0%, transparent 50%),
+            radial-gradient(circle at bottom left, rgb(137 87 250 / 0.35) 0%, transparent 50%);
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+}
+h1 { margin-bottom: 0.5rem; }
+.meta { color: #666; margin-bottom: 1.5rem; }
+.empty { color: #888; font-style: italic; }
+.back { margin-bottom: 1rem; display: inline-block; }
+.card {
+    margin-bottom: 2rem;
+    /* margin: 0 auto; — если нужно центрировать */
+    background-color: rgba(41, 49, 56, 0.45);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(59, 87, 120, 0.70);
+    border-radius: 10px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+.toolbar {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+.toolbar .back { margin-bottom: 0; }
+.upload-form__wrapper {
+    max-width: 640px;   /* подберите под ваш дизайн: 480, 640, 768 */
+    /* margin: 0 auto;  — если нужно центрировать */
+}

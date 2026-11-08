@@ -29,7 +29,8 @@ dependencies {
     implementation ("org.flywaydb:flyway-database-postgresql")
 
     //ui
-    implementation ("org.springframework.boot:spring-boot-starter-thymeleaf")
+    implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
+    implementation("io.github.wimdeblauwe:shadleaf-spring-boot-starter:1.0.2")
 
     //reports
     implementation("org.apache.poi:poi:5.2.5")
