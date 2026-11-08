@@ -10,15 +10,11 @@ import java.util.Optional;
 
 public interface SecurityRepository extends JpaRepository<Security, Long> {
 
-    @Query("""
-        select s from Security s
-         where (:isin is not null and s.isin = :isin)
-            or (:ticker is not null and s.ticker = :ticker
-                and (:exchange is null or s.exchange = :exchange))
-        """)
-    List<Security> findByIsinOrTicker(@Param("isin") String isin,
-                                      @Param("ticker") String ticker,
-                                      @Param("exchange") String exchange);
+    @Query(value = """
+        select * from stocks.securities s
+         where stocks.normalize_security_name(s.name) = stocks.normalize_security_name(:issuer)
+        """, nativeQuery = true)
+    List<Security> findByNormalizedName(@Param("issuer") String issuer);
 
     Optional<Security> findByTicker(String ticker);
     Optional<Security> findByTickerAndExchange(String ticker, String exchange);

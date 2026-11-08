@@ -20,26 +20,24 @@
 
     <sl:card-content>
         <sl:table th:if="${not #lists.isEmpty(portfolios)}">
-
-
             <thead>
-            <tr>
-                <th>ID</th>
-                <th>Название</th>
-                <th>Базовая валюта</th>
-                <th>Создан</th>
-            </tr>
+                <tr>
+                    <th>ID</th>
+                    <th>Название</th>
+                    <th>Базовая валюта</th>
+                    <th>Создан</th>
+                </tr>
             </thead>
             <tbody>
-            <tr th:each="p : ${portfolios}">
-                <td th:text="${p.id}">1</td>
-                <td><sl:badge variant="outline" th:text="${p.name}">Основной</sl:badge></td>
-                <td th:text="${p.baseCurrency}">RUB</td>
-                <td th:text="${p.createdAt}">2026-10-16</td>
-                <td>
-                    <sl:button as="a" variant="outline" th:href="@{/ui/portfolios/{id}(id=${p.id})}">Перейти</sl:button>
-                </td>>
-            </tr>
+                <tr th:each="p : ${portfolios}">
+                    <td th:text="${p.id}">1</td>
+                    <td><sl:badge variant="outline" th:text="${p.name}">Основной</sl:badge></td>
+                    <td th:text="${p.baseCurrency}">RUB</td>
+                    <td th:text="${p.createdAt}">2026-10-16</td>
+                    <td>
+                        <sl:button as="a" variant="outline" th:href="@{/ui/portfolios/{id}(id=${p.id})}">Перейти</sl:button>
+                    </td>>
+                </tr>
             </tbody>
         </sl:table>
     </sl:card-content>

@@ -9,12 +9,12 @@ import ru.redcarpet.stocks.model.entity.CashOperation;
 import ru.redcarpet.stocks.model.entity.Portfolio;
 import ru.redcarpet.stocks.model.entity.Security;
 import ru.redcarpet.stocks.model.enums.CashOperationType;
-import ru.redcarpet.stocks.model.exception.NotFoundException;
 import ru.redcarpet.stocks.model.repositories.SecurityRepository;
 import ru.redcarpet.stocks.model.service.HoldingService;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -52,15 +52,9 @@ public class UpdateHoldingsService {
     }
 
     private boolean applyOne(Portfolio portfolio, CashOperation operation) {
-        String isin = operation.getDividendIsin();
-        if (isin == null || isin.isBlank()) {
-            return false;   // нет ISIN — некуда применить
-        }
-
-        Security security = securityRepository.findByIsin(isin).orElse(null);
-        if (security == null) {
-            throw new NotFoundException("Security not found for ISIN " + isin);
-        }
+        Optional<Security> secOpt = resolveSecurity(operation);
+        if (secOpt.isEmpty()) return false;
+        Security security = secOpt.get();
 
         if (operation.getOperationType() == CashOperationType.DIVIDEND) {
             holdingService.applyDividend(
@@ -74,5 +68,43 @@ public class UpdateHoldingsService {
             return false;
         }
         return true;
+    }
+
+    private Optional<Security> resolveSecurity(CashOperation operation) {
+        if (operation == null) return Optional.empty();
+
+        // 1) ISIN (точный)
+        String isin = operation.getDividendIsin();
+        if (isin != null && !isin.isBlank()) {
+            Optional<Security> byIsin = securityRepository.findByIsin(isin);
+            if (byIsin.isPresent()) return byIsin;
+        }
+
+        // 2) имя эмитента (точное без учёта регистра)
+        String issuer = operation.getDividendIssuer();
+        if (issuer == null || issuer.isBlank()) return Optional.empty();
+
+        String normalized = normalize(issuer);
+        List<Security> byName = securityRepository.findByNormalizedName(normalized);
+        if (byName.isEmpty()) {
+            log.warn("Security not found for dividend: isin={}, issuer={}", isin, issuer);
+            return Optional.empty();
+        }
+        if (byName.size() > 1) {
+            log.warn("Multiple securities for issuer '{}': {} — not applying",
+                    issuer, byName.size());
+            return Optional.empty();   // неоднозначность — не угадываем
+        }
+        return Optional.of(byName.get(0));
+    }
+
+    private String normalize(String name) {
+        if (name == null) return null;
+        return name.trim()
+                .toLowerCase()
+                .replaceAll("\\b(inc|corp|corporation|llc|ltd|plc|co)\\b\\.?", "")
+                .replaceAll("[.,]", "")
+                .replaceAll("\\s+", " ")
+                .trim();
     }
 }

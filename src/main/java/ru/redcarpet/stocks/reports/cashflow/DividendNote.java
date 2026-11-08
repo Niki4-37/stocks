@@ -19,8 +19,14 @@ public record DividendNote(
     private static final Pattern RECORD_DATE_PATTERN =
             Pattern.compile("(\\d{2}\\.\\d{2}\\.\\d{4})");
 
+    /** Эмитент: всё до ", [N квартал|полугодие|месяц(ев)] YYYY г." */
+    private static final Pattern ISSUER_PATTERN = Pattern.compile(
+            "^(.+?),\\s*(?:\\d+\\s+(?:квартал|полугодие)\\s+|\\d+\\s+месяц(?:ев|а)?\\s+)?\\d{4}\\s*г\\.",
+            Pattern.CASE_INSENSITIVE);
+
+    /** Налог: последнее поле примечания. */
     private static final Pattern TAX_PATTERN =
-            Pattern.compile("налог\\s+([^,]+)", Pattern.CASE_INSENSITIVE);
+            Pattern.compile("налог\\s+(.+)$", Pattern.CASE_INSENSITIVE);
 
     public static DividendNote parse(String note) {
         if (Objects.isNull(note) || note.isBlank()) return null;
@@ -33,10 +39,8 @@ public record DividendNote(
         return new DividendNote(note, issuer, isin, date, tax);
     }
 
-    /** Эмитент — часть до ", <год> г." (с учётом запятых внутри кавычек). */
     private static String extractIssuer(String note) {
-        // "..., 2022 г., АО, ..." — берём всё до ", 2022 г."
-        Matcher m = Pattern.compile("^(.+?),\\s*\\d{4}\\s*г\\.").matcher(note);
+        Matcher m = ISSUER_PATTERN.matcher(note);
         return m.find() ? m.group(1).trim() : "";
     }
 
