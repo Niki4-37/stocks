@@ -61,6 +61,7 @@ public class PortfolioViewController {
     @GetMapping("/{id}")
     public String details(@PathVariable Long id, Model model) {
         model.addAttribute("portfolio", facade.details(id));
+        model.addAttribute("chartData", facade.historyChartData(id));
         return "portfolios/details";
     }
 }

@@ -32,3 +32,16 @@ h1 { margin-bottom: 0.5rem; }
     max-width: 640px;   /* подберите под ваш дизайн: 480, 640, 768 */
     /* margin: 0 auto;  — если нужно центрировать */
 }
+.cards-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;  /* две равные колонки */
+    gap: 1.5rem;                     /* отступ между карточками */
+    margin-bottom: 2rem;
+}
+
+/* Адаптивность: на узких экранах — одна колонка */
+@media (max-width: 768px) {
+    .cards-grid {
+        grid-template-columns: 1fr;
+    }
+}

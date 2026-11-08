@@ -20,73 +20,89 @@
 </p>
 
 <!-- ================= Балансы ================= -->
-<sl:card>
-    <sl:card-header>
-        <sl:card-title>Балансы</sl:card-title>
-    </sl:card-header>
+<div class="cards-grid">
+    <sl:card>
+        <sl:card-header>
+            <sl:card-title>Балансы</sl:card-title>
+        </sl:card-header>
 
-    <sl:card-content>
-        <sl:table>
-            <thead>
-            <tr>
-                <th>Показатель</th>
-                <th th:each="c : ${portfolio.cashByCurrency.keySet()}"
-                    th:text="${c}"></th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr>
-                <td>Денежные средства</td>
-                <td th:each="c : ${portfolio.cashByCurrency.keySet()}"
-                    th:text="${#numbers.formatDecimal(portfolio.cashByCurrency.get(c), 1, 2)}"></td>
-            </tr>
-            <tr>
-                <td>Себестоимость позиций</td>
-                <td th:each="c : ${portfolio.cashByCurrency.keySet()}"
-                    th:text="${#numbers.formatDecimal(
-                        portfolio.costBasisByCurrency.getOrDefault(c, T(java.math.BigDecimal).ZERO), 1, 2)}"></td>
-            </tr>
-            </tbody>
-        </sl:table>
+        <sl:card-content>
+            <sl:table>
+                <thead>
+                <tr>
+                    <th>Показатель</th>
+                    <th th:each="c : ${portfolio.cashByCurrency.keySet()}"
+                        th:text="${c}"></th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td>Денежные средства</td>
+                    <td th:each="c : ${portfolio.cashByCurrency.keySet()}"
+                        th:text="${#numbers.formatDecimal(portfolio.cashByCurrency.get(c), 1, 2)}"></td>
+                </tr>
+                <tr>
+                    <td>Себестоимость позиций</td>
+                    <td th:each="c : ${portfolio.cashByCurrency.keySet()}"
+                        th:text="${#numbers.formatDecimal(
+                            portfolio.costBasisByCurrency.getOrDefault(c, T(java.math.BigDecimal).ZERO), 1, 2)}"></td>
+                </tr>
+                </tbody>
+            </sl:table>
 
-        <p class="meta">
-            Базовая валюта: <b th:text="${portfolio.baseCurrency}"></b>.
-            «Всего» ниже — только по базовой валюте (без конвертации остальных).
-        </p>
+            <p class="meta">
+                Базовая валюта: <b th:text="${portfolio.baseCurrency}"></b>.
+                «Всего» ниже — только по базовой валюте (без конвертации остальных).
+            </p>
 
-        <sl:table>
-            <tbody>
-            <tr>
-                <td>Денежные средства (<span th:text="${portfolio.baseCurrency}"></span>)</td>
-                <td th:text="${#numbers.formatDecimal(portfolio.totalCashValue, 1, 2)}"></td>
-            </tr>
-            <tr>
-                <td>Себестоимость позиций (<span th:text="${portfolio.baseCurrency}"></span>)</td>
-                <td th:text="${#numbers.formatDecimal(portfolio.totalCostBasis, 1, 2)}"></td>
-            </tr>
-            <tr th:if="${portfolio.totalMarketValue != null}">
-                <td>Рыночная стоимость позиций</td>
-                <td th:text="${#numbers.formatDecimal(portfolio.totalMarketValue, 1, 2)}"></td>
-            </tr>
-            <tr>
-                <th>Всего (<span th:text="${portfolio.baseCurrency}"></span>)</th>
-                <th th:text="${#numbers.formatDecimal(portfolio.totalPortfolioValue, 1, 2)}"></th>
-            </tr>
-            </tbody>
-        </sl:table>
+            <sl:table>
+                <tbody>
+                <tr>
+                    <td>Денежные средства (<span th:text="${portfolio.baseCurrency}"></span>)</td>
+                    <td th:text="${#numbers.formatDecimal(portfolio.totalCashValue, 1, 2)}"></td>
+                </tr>
+                <tr>
+                    <td>Себестоимость позиций (<span th:text="${portfolio.baseCurrency}"></span>)</td>
+                    <td th:text="${#numbers.formatDecimal(portfolio.totalCostBasis, 1, 2)}"></td>
+                </tr>
+                <tr th:if="${portfolio.totalMarketValue != null}">
+                    <td>Рыночная стоимость позиций</td>
+                    <td th:text="${#numbers.formatDecimal(portfolio.totalMarketValue, 1, 2)}"></td>
+                </tr>
+                <tr>
+                    <th>Всего (<span th:text="${portfolio.baseCurrency}"></span>)</th>
+                    <th th:text="${#numbers.formatDecimal(portfolio.totalPortfolioValue, 1, 2)}"></th>
+                </tr>
+                </tbody>
+            </sl:table>
 
-        <sl:empty class="empty" th:if="${portfolio.totalMarketValue == null}">
-            Рыночная стоимость появится, когда будет подключён источник цен.
-            Пока «Всего» = деньги + себестоимость позиций в базовой валюте.
-        </sl:empty>
+            <sl:empty class="empty" th:if="${portfolio.totalMarketValue == null}">
+                Рыночная стоимость появится, когда будет подключён источник цен.
+                Пока «Всего» = деньги + себестоимость позиций в базовой валюте.
+            </sl:empty>
 
-        <sl:empty th:if="${#lists.isEmpty(portfolio.balances)}">
-            Нет средств на счетах.
-        </sl:empty>
+            <sl:empty th:if="${#lists.isEmpty(portfolio.balances)}">
+                Нет средств на счетах.
+            </sl:empty>
 
-    </sl:card-content>
-</sl:card>
+        </sl:card-content>
+    </sl:card>
 
+    <sl:card>
+        <sl:card-header>
+            <sl:card-title>Стоимость портфеля по дням</sl:card-title>
+        </sl:card-header>
+
+        <sl:card-content>
+            <sl:chart th:data="${chartData}" label="Стоимость портфеля по дням">
+                <sl:chart-grid/>
+                <sl:chart-x-axis key="date" format="date"/>
+                <sl:chart-tooltip indicator="dashed"/>
+                <sl:chart-area key="total" label="Всего"/>
+            </sl:chart>
+        </sl:card-content>
+    </sl:card>
+</div>
 <!-- ================= Позиции ================= -->
 <sl:card>
     <sl:card-header>

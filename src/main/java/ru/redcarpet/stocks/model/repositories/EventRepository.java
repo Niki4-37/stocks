@@ -10,6 +10,7 @@ import ru.redcarpet.stocks.verification.trades.TradeSource;
 import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface EventRepository extends JpaRepository<Event, Long> {
@@ -39,4 +40,16 @@ public interface EventRepository extends JpaRepository<Event, Long> {
                              @Param("number") String number,
                              @Param("date") LocalDate date,
                              @Param("isin") String isin);
+
+    List<Event> findByPortfolioIdAndEventDateBetweenOrderByEventDateAsc(
+            Long portfolioId, LocalDate from, LocalDate to);
+
+    List<Event> findByPortfolioIdAndEventDateBeforeOrderByEventDateAsc(
+            Long portfolioId, LocalDate before);
+
+    @Query("select min(e.eventDate) from Event e where e.portfolio.id = :portfolioId")
+    Optional<LocalDate> findMinEventDateByPortfolioId(@Param("portfolioId") Long portfolioId);
+
+    @Query("select max(e.eventDate) from Event e where e.portfolio.id = :portfolioId")
+    Optional<LocalDate> findMaxEventDateByPortfolioId(@Param("portfolioId") Long portfolioId);
 }
