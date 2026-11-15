@@ -3,6 +3,7 @@ package ru.redcarpet.stocks.model.service.impl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.redcarpet.stocks.model.dto.CreateCurrencyExchangeRequest;
 import ru.redcarpet.stocks.model.entity.CurrencyTradeEntity;
 import ru.redcarpet.stocks.model.entity.Portfolio;
@@ -10,6 +11,7 @@ import ru.redcarpet.stocks.model.exception.NotFoundException;
 import ru.redcarpet.stocks.model.repositories.CurrencyTradeRepository;
 import ru.redcarpet.stocks.model.repositories.PortfolioRepository;
 import ru.redcarpet.stocks.model.service.CurrencyService;
+import ru.redcarpet.stocks.verification.trades.TradeSource;
 
 import java.util.Currency;
 
@@ -22,6 +24,7 @@ public class CurrencyServiceImpl implements CurrencyService {
     private final PortfolioRepository portfolioRepository;
 
     @Override
+    @Transactional
     public CurrencyTradeEntity exchange(CreateCurrencyExchangeRequest request) {
         request.validate();
 
@@ -30,6 +33,7 @@ public class CurrencyServiceImpl implements CurrencyService {
 
         Currency lot     = request.lotCurrency();
         Currency counter = request.counterCurrency();
+        TradeSource source = request.source() != null ? request.source() : TradeSource.MANUAL;
 
         // запись сделки
         CurrencyTradeEntity entity = new CurrencyTradeEntity();
@@ -44,10 +48,9 @@ public class CurrencyServiceImpl implements CurrencyService {
         entity.setLotVolume(request.resolvedLotVolume());
         entity.setCounterVolume(request.resolvedCounterVolume());
         entity.setPlatform(request.platform());
-        entity.setSource(request.source());
+        entity.setSource(source);
 
-        log.info("Created CurrencyTradeEntity with: lot={}, counter={}, ",
-                lot, counter);
+        log.info("Created CurrencyTradeEntity with: lot={}, counter={}, ", lot, counter);
         return repository.save(entity);
     }
 

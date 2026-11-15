@@ -81,7 +81,7 @@
                 Пока «Всего» = деньги + себестоимость позиций в базовой валюте.
             </sl:empty>
 
-            <sl:empty th:if="${#lists.isEmpty(portfolio.balances)}">
+            <sl:empty th:if="${#lists.isEmpty(portfolio.balances())}">
                 Нет средств на счетах.
             </sl:empty>
 
@@ -110,7 +110,7 @@
     </sl:card-header>
     <sl:card-content>
 
-        <sl:table th:if="${not #lists.isEmpty(portfolio.securities)}">
+        <sl:table th:if="${not #lists.isEmpty(portfolio.securities())}">
             <thead>
             <tr>
                 <th>Тикер</th>
@@ -125,7 +125,7 @@
             </tr>
             </thead>
             <tbody>
-            <tr th:each="h : ${portfolio.securities}">
+            <tr th:each="h : ${portfolio.securities()}">
                 <td th:text="${h.ticker}">LKOH</td>
                 <td th:text="${h.name}">Лукойл</td>
                 <td th:text="${#numbers.formatDecimal(h.quantity, 1, 6)}">10.000000</td>
@@ -139,7 +139,7 @@
             </tbody>
         </sl:table>
 
-        <sl:empty th:if="${#lists.isEmpty(portfolio.securities)}">
+        <sl:empty th:if="${#lists.isEmpty(portfolio.securities())}">
             Открытых позиций нет.
         </sl:empty>
     </sl:card-content>

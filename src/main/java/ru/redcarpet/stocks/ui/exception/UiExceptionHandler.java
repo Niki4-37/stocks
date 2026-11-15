@@ -14,6 +14,6 @@ public class UiExceptionHandler {
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public String onNotFound(NotFoundException ex, Model model) {
         model.addAttribute("message", ex.getMessage());
-        return "error/404";
+        return "portfolios/404";
     }
 }

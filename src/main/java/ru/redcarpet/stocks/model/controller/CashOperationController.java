@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -14,9 +15,9 @@ import ru.redcarpet.stocks.model.entity.CashOperation;
 import ru.redcarpet.stocks.model.enums.CashFlowDirection;
 import ru.redcarpet.stocks.model.service.BalanceService;
 import ru.redcarpet.stocks.model.service.CashOperationService;
-import ru.redcarpet.stocks.verification.cash.CashVerificationService;
 import ru.redcarpet.stocks.verification.cash.CashCheckRequest;
 import ru.redcarpet.stocks.verification.cash.CashCheckResponse;
+import ru.redcarpet.stocks.verification.cash.CashVerificationService;
 import ru.redcarpet.stocks.verification.trades.TradeSource;
 
 import java.math.BigDecimal;
@@ -27,10 +28,12 @@ import java.math.BigDecimal;
 public class CashOperationController {
 
     private final CashOperationService cashOperationService;
-    private final CashVerificationService verificationService;
     private final BalanceService balanceService;
+    private final CashVerificationService verificationService;
 
+    // TODO: вынести оркестрацию баланса в сервис-оркестратор (следующий коммит).
     @PostMapping
+    @Transactional
     public ResponseEntity<Long> create(
             @Valid @RequestBody CreateCashOperationRequest req
     ) {
@@ -48,13 +51,16 @@ public class CashOperationController {
         );
         CashOperation operation = cashOperationService.create(command);
 
-        if (command.source() == TradeSource.MANUAL) {
+        if (operation.getSource() == TradeSource.MANUAL) {
             BigDecimal delta = operation.getDirection() == CashFlowDirection.INCOME
                     ? operation.getAmount()
                     : operation.getAmount().negate();
-            balanceService.apply(operation.getPortfolio().getId(), operation.getCurrency(),
+            balanceService.apply(
+                    operation.getPortfolio().getId(),
+                    operation.getCurrency(),
                     delta);
         }
+
         return ResponseEntity.status(HttpStatus.CREATED).body(operation.getId());
     }
 

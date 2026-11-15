@@ -22,6 +22,7 @@ public class PortfolioFacade {
     private final PortfolioService portfolioService;
     private final BalanceService balanceService;
     private final PortfolioValueHistoryService historyService;
+    private final PortfolioOverviewMapper overviewMapper;
 
     @Transactional
     public PortfolioBasicInfo create(CreatePortfolioCommand cmd) {
@@ -48,9 +49,9 @@ public class PortfolioFacade {
                 .toList();
     }
 
-    @Transactional(readOnly = true)
-    public PortfolioDetails details(Long id) {
-        return portfolioService.findById(id);
+    @Transactional
+    public PortfolioOverview details(Long id) {
+        return overviewMapper.toOverview(portfolioService.findById(id));
     }
 
     @Transactional(readOnly = true)

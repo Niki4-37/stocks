@@ -3,7 +3,6 @@ package ru.redcarpet.stocks.importing.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import ru.redcarpet.stocks.importing.dto.ImportResult;
 import ru.redcarpet.stocks.model.entity.CashOperation;
 import ru.redcarpet.stocks.model.entity.Portfolio;
@@ -23,12 +22,12 @@ public class UpdateHoldingsService {
 
     private final SecurityRepository securityRepository;
     private final HoldingService holdingService;
+    private final RequiresNewTransaction newTransaction;
 
     /**
      * Применяет сохранённые дивиденды/купоны к Holding.
      * Вызывать после импорта сделок (Holding уже создан из BUY/SELL).
      */
-    @Transactional
     public ImportResult applySavedDividends(
             Portfolio portfolio,
             List<CashOperation> savedDividends
@@ -38,7 +37,9 @@ public class UpdateHoldingsService {
 
         for (CashOperation operation : savedDividends) {
             try {
-                if (applyOne(portfolio, operation)) applied++; else skipped++;
+                boolean wasApplied = newTransaction.execute(
+                        () -> applyOne(portfolio, operation));
+                if (wasApplied) applied++; else skipped++;
             } catch (RuntimeException e) {
                 log.warn("Failed to apply {} {}: {}",
                         operation.getOperationType(),

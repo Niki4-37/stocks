@@ -3,7 +3,6 @@ package ru.redcarpet.stocks.importing.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import ru.redcarpet.stocks.importing.dto.ImportResult;
 import ru.redcarpet.stocks.model.dto.CreateCurrencyExchangeRequest;
 import ru.redcarpet.stocks.model.entity.Portfolio;
@@ -28,15 +27,16 @@ public class CurrencyTradeImportService {
 
     private final CurrencyService currencyTradeService;
     private final CurrencyTradeRepository repository;
+    private final RequiresNewTransaction newTransaction;
 
-    @Transactional
     public ImportResult importCurrencies(Portfolio portfolio, List<CurrencyTrade> trades) {
         int inserted = 0, skipped = 0;
         List<String> warnings = new ArrayList<>();
 
         for (CurrencyTrade t : trades) {
             try {
-                if (importOne(portfolio, t)) inserted++; else skipped++;
+                boolean created = newTransaction.execute(() -> importOne(portfolio, t));
+                if (created) inserted++; else skipped++;
             } catch (RuntimeException e) {
                 log.warn("Failed to import currencies trade {}: {}", t.number(), e.getMessage(), e);
                 warnings.add("Currency trade " + t.number() + ": " + e.getMessage());

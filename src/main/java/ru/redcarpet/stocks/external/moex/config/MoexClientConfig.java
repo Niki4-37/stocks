@@ -1,4 +1,4 @@
-package ru.redcarpet.stocks.external.config;
+package ru.redcarpet.stocks.external.moex.config;
 
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;

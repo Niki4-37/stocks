@@ -73,36 +73,9 @@ public class PortfolioServiceImpl implements PortfolioService {
         Portfolio portfolio = portfolioRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Portfolio not found: " + id));
 
-        Currency base = portfolio.getBaseCurrency();
-
         List<PortfolioDetails.Balance> balances = getPortfolioBalances(id);
 
         List<Holding> rawHoldings = holdingRepository.findByPortfolioId(id);
-
-        Map<Currency, BigDecimal> cashByCurrency = sumByCurrency(
-                base,
-                balances,
-                PortfolioDetails.Balance::currency,
-                PortfolioDetails.Balance::amount
-        );
-
-        Map<Currency, BigDecimal> costBasisByCurrency = sumByCurrency(
-            base,
-            rawHoldings,
-            Holding::getCurrency,
-            Holding::getCostBasis
-        );
-
-        // агрегаты только по базовой валюте
-        BigDecimal totalCostBasis = costBasisByCurrency.getOrDefault(base, BigDecimal.ZERO);
-
-        BigDecimal totalCashValue = cashByCurrency.getOrDefault(base, BigDecimal.ZERO);
-        // рыночной стоимости пока нет
-        BigDecimal totalMarketValue = null;
-
-        // пока цен нет — «стоимость портфеля» = cash + себестоимость
-        BigDecimal totalPortfolioValue = totalCashValue.add(totalCostBasis)
-                .setScale(2, RoundingMode.HALF_UP);
 
         List<PortfolioDetails.HeldSecurity> holdings = rawHoldings.stream()
                 .map(this::toHoldingResponse)
@@ -111,15 +84,9 @@ public class PortfolioServiceImpl implements PortfolioService {
         return new PortfolioDetails(
                 portfolio.getId(),
                 portfolio.getName(),
-                base,
+                portfolio.getBaseCurrency(),
                 balances,
-                holdings,
-                cashByCurrency,
-                costBasisByCurrency,
-                totalCostBasis,
-                totalMarketValue,
-                totalCashValue,
-                totalPortfolioValue);
+                holdings);
     }
 
     private PortfolioDetails.HeldSecurity toHoldingResponse(Holding h) {
@@ -135,28 +102,5 @@ public class PortfolioServiceImpl implements PortfolioService {
                 h.getTotalCoupons(),
                 h.getRealizedPnl(),
                 costBasis);
-    }
-
-    private static <T> Map<Currency, BigDecimal> sumByCurrency(
-            Currency base,
-            Collection<T> items,
-            Function<T, Currency> currencyExtractor,
-            Function<T, BigDecimal> amountExtractor
-    ) {
-        Comparator<Currency> byBaseFirst = (a, b) -> {
-            if (a.equals(b)) return 0;
-            if (a.equals(base)) return -1;
-            if (b.equals(base)) return 1;
-            return a.getCurrencyCode().compareTo(b.getCurrencyCode());
-        };
-        Map<Currency, BigDecimal> result = new TreeMap<>(byBaseFirst);
-        for (T item : items) {
-            Currency currency = currencyExtractor.apply(item);
-            BigDecimal amount = amountExtractor.apply(item);
-            if (Objects.isNull(currency) || Objects.isNull(amount)) continue;
-            result.merge(currency, amount, BigDecimal::add);
-        }
-        result.replaceAll((c, v) -> v.setScale(2, RoundingMode.HALF_UP));
-        return result;
     }
 }

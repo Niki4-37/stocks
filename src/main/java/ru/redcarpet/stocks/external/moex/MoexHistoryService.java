@@ -1,4 +1,4 @@
-package ru.redcarpet.stocks.external;
+package ru.redcarpet.stocks.external.moex;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

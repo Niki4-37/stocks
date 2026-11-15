@@ -33,7 +33,7 @@ public class EventServiceImpl implements EventService {
 
     @Override
     @Transactional
-    public void create(CreateEventRequest request) {
+    public Event create(CreateEventRequest request) {
         Portfolio portfolio = portfolioRepository.findById(request.getPortfolioId())
                 .orElseThrow(() -> new NotFoundException(
                         "Portfolio not found: " + request.getPortfolioId()));
@@ -46,7 +46,7 @@ public class EventServiceImpl implements EventService {
         BigDecimal amount = computeAmount(request);
 
         Event event = buildEvent(portfolio, security, request, exchangeRate, amount);
-        saveInternal(event);
+        return saveInternal(event);
     }
 
     @Override
@@ -58,7 +58,14 @@ public class EventServiceImpl implements EventService {
     private Event saveInternal(Event event) {
         try {
             Event saved = eventRepository.save(event);
-            holdingService.applyEvent(saved);
+            // Дивиденды/купоны не меняют количество бумаг — applyEvent для них неприменим.
+            if (saved.getOperationType().affectsQuantity()) {
+                if (saved.getSecurity() == null) {
+                    throw new ValidationException(
+                            "Security is required for " + saved.getOperationType());
+                }
+                holdingService.applyEvent(saved);
+            }
             return saved;
         } catch (DataIntegrityViolationException e) {
             throw new ConflictException("Trade already exists: " + event.getTradeNumber(), e);

@@ -1,4 +1,4 @@
-package ru.redcarpet.stocks.external;
+package ru.redcarpet.stocks.external.moex;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 

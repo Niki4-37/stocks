@@ -3,7 +3,6 @@ package ru.redcarpet.stocks.importing.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import ru.redcarpet.stocks.importing.dto.CashImportResult;
 import ru.redcarpet.stocks.importing.dto.ImportResult;
 import ru.redcarpet.stocks.model.dto.CreateCashOperationCommand;
@@ -27,13 +26,13 @@ import java.util.stream.Collectors;
 public class CashImportService {
 
     private final CashOperationService cashOperationService;
+    private final RequiresNewTransaction newTransaction;
 
     /**
      * Импортирует строки 1.1 в cash_operations.
      * Дедупликация по содержимому: если в отчёте N одинаковых строк,
      * а в БД уже M — создаём max(0, N-M).
      */
-    @Transactional
     public CashImportResult importFlows(Long portfolioId,
                                         List<CashFlowRow> rows,
                                         TradeSource source
@@ -55,8 +54,6 @@ public class CashImportService {
         for (List<CashFlowRow> sameRows : byKey.values()) {
             CashFlowRow first = sameRows.get(0);
 
-            CashOperationType type = first.operation();
-
             LocalDate date;
             try {
                 date = DateParser.parseBrokerDate(first.date());
@@ -66,32 +63,53 @@ public class CashImportService {
                 continue;
             }
 
-            long existing = cashOperationService.count(
-                    portfolioId, source, date, type,
-                    first.platform(), first.direction(), first.amount(), first.currency());
-
-            long toInsert = sameRows.size() - existing;
-            if (toInsert <= 0) {
+            try {
+                GroupResult group = newTransaction.execute(
+                        () -> importGroup(portfolioId, sameRows, first, date, source));
+                inserted += group.inserted();
+                skipped += group.skipped();
+                savedDividends.addAll(group.savedDividends());
+            } catch (RuntimeException e) {
+                log.warn("Failed to import cash row {}: {}", first, e.getMessage(), e);
+                warnings.add("Bad row " + first + ": " + e.getMessage());
                 skipped += sameRows.size();
-                continue;
             }
-
-            for (int i = 0; i < toInsert; i++) {
-                log.info("Importing cash operation: operation={}, date={}, direction={}, amount={}",
-                        first.operation(), first.date(), first.direction(), first.amount());
-                CashOperation saved = cashOperationService.create(toCommand(portfolioId, first, date, source));
-                inserted++;
-
-                if (first.operation().hasDividendFeature()) {
-                    savedDividends.add(saved);
-                }
-            }
-            skipped += sameRows.size() - toInsert;
         }
 
         return new CashImportResult(
                 new ImportResult(inserted, skipped, warnings),
                 savedDividends);
+    }
+
+    private GroupResult importGroup(Long portfolioId,
+                                    List<CashFlowRow> sameRows,
+                                    CashFlowRow first,
+                                    LocalDate date,
+                                    TradeSource source) {
+        CashOperationType type = first.operation();
+
+        long existing = cashOperationService.count(
+                portfolioId, source, date, type,
+                first.platform(), first.direction(), first.amount(), first.currency());
+
+        long toInsert = sameRows.size() - existing;
+        if (toInsert <= 0) {
+            return new GroupResult(0, sameRows.size(), List.of());
+        }
+
+        List<CashOperation> saved = new ArrayList<>();
+        for (long i = 0; i < toInsert; i++) {
+            log.info("Importing cash operation: operation={}, date={}, direction={}, amount={}",
+                    first.operation(), first.date(), first.direction(), first.amount());
+            CashOperation operation = cashOperationService.create(
+                    toCommand(portfolioId, first, date, source));
+            saved.add(operation);
+        }
+
+        return new GroupResult(
+                (int) toInsert,
+                (int) (sameRows.size() - toInsert),
+                saved);
     }
 
     private CreateCashOperationCommand toCommand(Long portfolioId, CashFlowRow row,
@@ -122,6 +140,10 @@ public class CashImportService {
     }
 
     private static String contentKey(CashFlowRow r) {
-        return r.date() + "|" + r.operation() + "|" + r.platform() + "|" + r.direction() + "|" + r.amount();
+        return r.date() + "|" + r.operation() + "|" + r.platform() + "|"
+                + r.direction() + "|" + r.currency() + "|" + r.amount();
+    }
+
+    private record GroupResult(int inserted, int skipped, List<CashOperation> savedDividends) {
     }
 }

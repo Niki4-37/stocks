@@ -13,7 +13,6 @@ import ru.redcarpet.stocks.model.repositories.CashOperationRepository;
 import ru.redcarpet.stocks.model.repositories.PortfolioBalanceRepository;
 import ru.redcarpet.stocks.model.repositories.PortfolioRepository;
 import ru.redcarpet.stocks.model.service.BalanceService;
-import ru.redcarpet.stocks.model.service.CashOperationService;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -101,14 +100,25 @@ public class BalanceServiceImpl implements BalanceService {
                 });
     }
 
+    /**
+     * Ожидаемые остатки по cash_operations — единственному источнику правды
+     * для движения денег по портфелю.
+     */
     private Map<Currency, BigDecimal> expectedBalances(Long portfolioId) {
         Map<Currency, BigDecimal> result = new HashMap<>();
+
         for (CashOperation op : cashOperationRepository.findByPortfolioId(portfolioId)) {
             BigDecimal delta = op.getDirection() == CashFlowDirection.INCOME
                     ? op.getAmount()
                     : op.getAmount().negate();
-            result.merge(op.getCurrency(), delta, BigDecimal::add);
+            add(result, op.getCurrency(), delta);
         }
+
         return result;
+    }
+
+    private static void add(Map<Currency, BigDecimal> target, Currency currency, BigDecimal delta) {
+        if (currency == null || delta == null || delta.signum() == 0) return;
+        target.merge(currency, delta, BigDecimal::add);
     }
 }

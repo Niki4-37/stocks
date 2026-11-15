@@ -33,14 +33,20 @@ spring:
     baseline-on-migrate: true
     baseline-version: 0
     validate-on-migrate: true
-    schemas: {SCHEMA_NAME:stocks}
-    default-schema: {SCHEMA_NAME:stocks}
+    schemas: ${SCHEMA_NAME:stocks}
+    default-schema: ${SCHEMA_NAME:stocks}
     table: flyway_schema_history
 
 moex:
   url: https://iss.moex.com/iss
   connection-duration-sec: 10
   read-duration-sec: 10
+
+cbr:
+  client:
+    url: https://www.cbr.ru
+    connection-duration-sec: 5
+    read-duration-sec: 10
 
 logging:
   level:

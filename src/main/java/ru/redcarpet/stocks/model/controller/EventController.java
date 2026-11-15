@@ -4,16 +4,17 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import ru.redcarpet.stocks.model.dto.CreateEventRequest;
+import ru.redcarpet.stocks.model.entity.Event;
 import ru.redcarpet.stocks.model.service.BalanceService;
 import ru.redcarpet.stocks.model.service.EventService;
 
 import java.math.BigDecimal;
-import java.util.Currency;
 
 @RestController
 @RequestMapping("/api/events")
@@ -23,20 +24,20 @@ public class EventController {
     private final EventService eventService;
     private final BalanceService balanceService;
 
+    // TODO: вынести оркестрацию баланса в сервис-оркестратор (следующий коммит).
     @PostMapping
+    @Transactional
     public ResponseEntity<Long> create(@Valid @RequestBody CreateEventRequest request) {
-        eventService.create(request);
+        Event event = eventService.create(request);
 
-        if (request.getOperationType().affectsCash()) {
-            BigDecimal amount = eventService.computeAmount(request);
-            Currency currency = request.getCurrency();
-            switch (request.getOperationType().getCashDir()) {
-                case IN -> balanceService.credit(request.getPortfolioId(), currency, amount);
-                case OUT -> balanceService.debit(request.getPortfolioId(), currency, amount);
-                case NONE -> { }
-            }
+        if (event.getOperationType().affectsCash()) {
+            int sign = event.getOperationType().getCashDir().sign();
+            balanceService.apply(
+                    event.getPortfolio().getId(),
+                    event.getCurrency(),
+                    event.getAmount().multiply(BigDecimal.valueOf(sign)));
         }
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(request.getPortfolioId());
+        return ResponseEntity.status(HttpStatus.CREATED).body(event.getId());
     }
 }

@@ -3,7 +3,6 @@ package ru.redcarpet.stocks.importing.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import ru.redcarpet.stocks.importing.dto.ImportResult;
 import ru.redcarpet.stocks.model.component.EventFactory;
 import ru.redcarpet.stocks.model.entity.Event;
@@ -22,8 +21,8 @@ public class TradeImportService {
 
     private final EventFactory eventFactory;
     private final EventService eventService;
+    private final RequiresNewTransaction newTransaction;
 
-    @Transactional
     public ImportResult importTrades(Portfolio portfolio, TradesResult trades) {
         return importAll(portfolio, trades.stocks(), eventFactory::fromStockTrade)
                 .merge(importAll(portfolio, trades.funds(),  eventFactory::fromFundTrade))
@@ -41,20 +40,26 @@ public class TradeImportService {
 
         for (T trade : trades) {
             try {
-                Event event = toEvent.apply(trade, portfolio);
+                boolean created = newTransaction.execute(() -> {
+                    Event event = toEvent.apply(trade, portfolio);
 
-                if (eventService.exists(event)) {
+                    if (eventService.exists(event)) {
+                        return false;
+                    }
+
+                    eventService.save(event);
+                    return true;
+                });
+
+                if (created) {
+                    inserted++;
+                } else {
                     skipped++;
-                    continue;
                 }
-
-                eventService.save(event);
-                inserted++;
             } catch (RuntimeException e) {
                 log.warn("Failed to import trade {}: {}", trade, e.getMessage(), e);
                 warnings.add("Bad trade " + trade + ": " + e.getMessage());
                 skipped++;
-                continue;
             }
         }
 
