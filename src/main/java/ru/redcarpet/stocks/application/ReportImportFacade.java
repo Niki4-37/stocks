@@ -1,4 +1,4 @@
-package ru.redcarpet.stocks.importing.service;
+package ru.redcarpet.stocks.application;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -6,6 +6,10 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.redcarpet.stocks.importing.dto.CashImportResult;
 import ru.redcarpet.stocks.importing.dto.ImportSummarizedResult;
 import ru.redcarpet.stocks.importing.dto.ImportResult;
+import ru.redcarpet.stocks.importing.service.CashImportService;
+import ru.redcarpet.stocks.importing.service.CurrencyTradeImportService;
+import ru.redcarpet.stocks.importing.service.TradeImportService;
+import ru.redcarpet.stocks.importing.service.UpdateHoldingsService;
 import ru.redcarpet.stocks.model.dto.BalanceMismatch;
 import ru.redcarpet.stocks.model.entity.Portfolio;
 import ru.redcarpet.stocks.model.exception.NotFoundException;
