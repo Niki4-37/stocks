@@ -10,8 +10,8 @@ public record DailyBalance(
         LocalDate date,
         Map<Currency, BigDecimal> cash,               // деньги по валютам
         List<Position> positions,                     // бумаги на этот день (по себестоимости)
-        BigDecimal totalCashInBase,                   // деньги в базовой валюте (пока только базовая)
-        BigDecimal totalPositionsCostBasis,           // себестоимость бумаг (в базовой)
+        BigDecimal totalCashInBase,                   // деньги в базовой валюте (по курсу ЦБ на дату)
+        BigDecimal totalPositionsCostBasis,           // себестоимость бумаг в базовой валюте (по курсу ЦБ на дату)
         BigDecimal totalValue                         // totalCashInBase + totalPositionsCostBasis
 ) {
     public record Position(

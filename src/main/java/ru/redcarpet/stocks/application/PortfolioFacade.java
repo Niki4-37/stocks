@@ -59,7 +59,7 @@ public class PortfolioFacade {
         return portfolioService.getPortfolioBalances(id);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public List<Map<String, Object>> historyChartData(Long portfolioId) {
         return historyService.history(portfolioId).stream()
                 .map(b -> Map.<String, Object>of(
